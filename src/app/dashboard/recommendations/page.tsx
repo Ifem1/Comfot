@@ -105,7 +105,7 @@ function RecDossier({ rec }: { rec: Recommendation }) {
           {rec.guest_message && (
             <div className="bg-card-hi rounded-lg px-4 py-3 border-l-2 border-gold/30">
               <p className="mono-text text-gold mb-1.5">Guest Message</p>
-              <p className="text-ivory-dim text-sm italic">"{rec.guest_message}"</p>
+              <p className="text-ivory-dim text-sm italic">&ldquo;{rec.guest_message}&rdquo;</p>
             </div>
           )}
 

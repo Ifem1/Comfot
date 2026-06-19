@@ -90,7 +90,7 @@ function GuestCard({ guest }: { guest: Guest }) {
             <div>
               <p className="mono-text text-gold mb-1.5">Review History</p>
               <ul className="space-y-1">
-                {guest.review_history.map((r, i) => <li key={i} className="text-ivory-dim text-xs italic">"{r}"</li>)}
+                {guest.review_history.map((r, i) => <li key={i} className="text-ivory-dim text-xs italic">&ldquo;{r}&rdquo;</li>)}
               </ul>
             </div>
           )}

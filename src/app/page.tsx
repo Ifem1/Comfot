@@ -48,7 +48,7 @@ export default function LandingPage() {
           </p>
 
           <p className="text-ivory-faint text-sm font-medium mb-12 mono-text">
-            "Personalized comfort should not be guessed. It should be validated."
+            &ldquo;Personalized comfort should not be guessed. It should be validated.&rdquo;
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -126,11 +126,11 @@ export default function LandingPage() {
             {[
               {
                 title: "Rule-based systems",
-                flaw: "Cannot handle nuance. \"Spa user\" + \"early riser\" = different spa slots, different packages, different room floors. Rules cannot capture this.",
+                flaw: "Cannot handle nuance. Spa user + early riser = different spa slots, different packages, different room floors. Rules cannot capture this.",
               },
               {
                 title: "Keyword matching",
-                flaw: "\"Quiet\" is not a feature. It's a feeling. No keyword maps cleanly to the right room, amenity, or pre-arrival message.",
+                flaw: "Quiet is not a feature. It is a feeling. No keyword maps cleanly to the right room, amenity, or pre-arrival message.",
               },
               {
                 title: "Single AI model",
