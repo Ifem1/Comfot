@@ -44,27 +44,33 @@ export function useGuests() {
   })
 }
 
+// Contract signature:
+// submit_guest_profile(guest_ref, loyalty_tier, stay_count, total_spend_band,
+//                      reviews, conversation_log, special_requests,
+//                      dietary_needs, room_history, language)
 export function useSubmitGuestProfile() {
   const { address } = useAccount()
   const { track } = useTxTracker()
 
   return async (
     guestRef: string,
-    name: string,
     loyaltyTier: string,
-    reviewHistory: string[],
+    stayCount: number,
+    totalSpendBand: string,
+    reviews: string[],
+    conversationLog: string[],
     specialRequests: string[],
     dietaryNeeds: string[],
-    conversationHistory: string[],
     roomHistory: string[],
+    language: string,
   ) => {
     try {
       const hash = await writeContract("submit_guest_profile", [
-        guestRef, name, loyaltyTier,
-        reviewHistory, specialRequests, dietaryNeeds,
-        conversationHistory, roomHistory,
+        guestRef, loyaltyTier, stayCount, totalSpendBand,
+        reviews, conversationLog, specialRequests,
+        dietaryNeeds, roomHistory, language,
       ])
-      track(hash, `Submit guest: ${name}`, [
+      track(hash, `Submit guest: ${guestRef}`, [
         ["guest-ids", address ?? ""],
         ["guests", address ?? ""],
       ])

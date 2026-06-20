@@ -177,7 +177,7 @@ function RecDossier({ rec }: { rec: Recommendation }) {
   )
 }
 
-function EscalationCard({ esc, guests }: { esc: Escalation; guests: { guest_id: string; name: string }[] }) {
+function EscalationCard({ esc, guests }: { esc: Escalation; guests: { guest_id: string; guest_ref: string }[] }) {
   const [note, setNote] = useState("")
   const [resolving, setResolving] = useState(false)
   const resolveEscalation = useResolveEscalation()
@@ -201,7 +201,7 @@ function EscalationCard({ esc, guests }: { esc: Escalation; guests: { guest_id: 
             <span className="text-warning text-sm font-medium mono-text">ESCALATED — Human Review Required</span>
           </div>
           <p className="text-ivory-dim text-xs mono-text">
-            {guest ? guest.name : esc.guest_id} · Rec {esc.rec_id}
+            {guest ? guest.guest_ref : esc.guest_id} · Rec {esc.rec_id}
           </p>
           {esc.alignment_score != null && (
             <p className="text-ivory-faint text-xs mt-0.5">Alignment score: {esc.alignment_score}</p>
@@ -258,10 +258,6 @@ export default function RecommendationsPage() {
   const requestRecommendation = useRequestRecommendation()
 
   const [selectedGuestId, setSelectedGuestId] = useState("")
-  const [roomType, setRoomType] = useState("")
-  const [checkIn, setCheckIn] = useState("")
-  const [checkOut, setCheckOut] = useState("")
-  const [context, setContext] = useState("")
   const [requesting, setRequesting] = useState(false)
 
   const handleRequest = async (e: React.FormEvent) => {
@@ -269,7 +265,8 @@ export default function RecommendationsPage() {
     if (!selectedGuestId) return
     setRequesting(true)
     try {
-      await requestRecommendation(selectedGuestId, roomType, checkIn, checkOut, context)
+      // Contract takes only guest_id — all context is built from the stored guest profile
+      await requestRecommendation(selectedGuestId)
     } finally {
       setRequesting(false)
     }
@@ -296,7 +293,12 @@ export default function RecommendationsPage() {
 
       {/* Request form */}
       <form onSubmit={handleRequest} className="glass-card rounded-xl p-8 space-y-5">
-        <p className="text-ivory font-medium text-sm mb-2">Request New Recommendation</p>
+        <div>
+          <p className="text-ivory font-medium text-sm mb-1">Request New Recommendation</p>
+          <p className="text-ivory-faint text-xs">
+            GenLayer validators analyse the stored guest profile and generate a personalised recommendation.
+          </p>
+        </div>
 
         <div>
           <label className="label-dark">Select Guest</label>
@@ -309,36 +311,11 @@ export default function RecommendationsPage() {
             <option value="">— Select a guest —</option>
             {guests.map((g) => (
               <option key={g.guest_id} value={g.guest_id}>
-                {g.name} ({g.loyalty_tier}) · {g.guest_id}
+                {g.guest_ref} ({g.loyalty_tier}) · {g.guest_id}
               </option>
             ))}
           </select>
           {guestsLoading && <p className="text-ivory-faint text-xs mt-1">Loading guests…</p>}
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-4">
-          <div>
-            <label className="label-dark">Room Type</label>
-            <input className="input-dark" value={roomType} onChange={(e) => setRoomType(e.target.value)} placeholder="e.g. Deluxe Suite" />
-          </div>
-          <div>
-            <label className="label-dark">Check-in</label>
-            <input type="date" className="input-dark" value={checkIn} onChange={(e) => setCheckIn(e.target.value)} />
-          </div>
-          <div>
-            <label className="label-dark">Check-out</label>
-            <input type="date" className="input-dark" value={checkOut} onChange={(e) => setCheckOut(e.target.value)} />
-          </div>
-        </div>
-
-        <div>
-          <label className="label-dark">Special Context (optional)</label>
-          <textarea
-            className="input-dark h-20 resize-none"
-            value={context}
-            onChange={(e) => setContext(e.target.value)}
-            placeholder="e.g. Anniversary stay, VIP guest, attending conference"
-          />
         </div>
 
         <button

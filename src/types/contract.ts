@@ -26,15 +26,16 @@ export interface Guest {
   guest_id: string
   guest_ref: string
   hotel_address: string
-  name: string
   loyalty_tier: string
-  stay_count: number
-  review_history: string[]
-  conversation_history: string[]
-  special_requests: string[]
-  dietary_needs: string[]
-  room_history: string[]
-  preference_tags: string[]
+  stay_count?: number
+  total_spend_band?: string
+  reviews?: string[]
+  conversation_log?: string[]
+  special_requests?: string[]
+  dietary_needs?: string[]
+  room_history?: string[]
+  language?: string
+  preference_tags?: string[]
   comfot_score?: number
   total_recommendations?: number
   erased?: boolean

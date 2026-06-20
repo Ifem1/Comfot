@@ -23,9 +23,11 @@ function RuleRow({ rule, onDelete }: { rule: PreferenceRule; onDelete: (id: stri
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5">
           <span className="mono-text text-gold border border-gold/20 bg-gold/5 rounded px-2 py-0.5 text-xs">{rule.rule_type}</span>
-          <span className="mono-text text-ivory-faint text-xs">priority {rule.priority}</span>
+          {rule.active !== false && <span className="text-success text-xs mono-text">active</span>}
+          {rule.active === false && <span className="text-ivory-faint text-xs mono-text">inactive</span>}
         </div>
-        <p className="text-ivory-dim text-sm mt-0.5">{rule.rule_value}</p>
+        <p className="text-ivory text-sm mt-0.5">{rule.rule_value}</p>
+        {rule.description && <p className="text-ivory-dim text-xs mt-0.5">{rule.description}</p>}
         <p className="mono-text text-ivory-faint text-xs mt-0.5">{rule.rule_id}</p>
       </div>
       <button
@@ -45,18 +47,20 @@ export default function PreferencesPage() {
   const deleteRule = useDeletePreferenceRule()
   const qc = useQueryClient()
 
-  const [ruleType, setRuleType] = useState("room_preference")
-  const [ruleValue, setRuleValue] = useState("")
-  const [priority, setPriority] = useState(5)
-  const [submitting, setSubmitting] = useState(false)
+  const [ruleType, setRuleType]       = useState("room_preference")
+  const [ruleValue, setRuleValue]     = useState("")
+  const [description, setDescription] = useState("")
+  const [submitting, setSubmitting]   = useState(false)
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!ruleValue.trim()) return
     setSubmitting(true)
+    // rule_id is a slug derived from type + value; contract deduplicates by rule_id
+    const ruleId = `${ruleType}_${Date.now()}`
     try {
-      await setRule(ruleType, ruleValue.trim(), priority)
-      setRuleValue("")
+      await setRule(ruleId, ruleType, ruleValue.trim(), description.trim(), true)
+      setRuleValue(""); setDescription("")
       setTimeout(() => {
         qc.invalidateQueries({ queryKey: ["preference-rules", address] })
       }, 3000)
@@ -75,18 +79,17 @@ export default function PreferencesPage() {
   return (
     <div className="max-w-3xl mx-auto space-y-8 animate-fade-in">
       <div>
-        <p className="mono-text text-gold mb-1">Rule Engine</p>
+        <p className="mono-text text-gold mb-1">Hotel Intelligence</p>
         <h1 className="display-text text-4xl font-light text-ivory">Preference Rules</h1>
         <p className="text-ivory-dim text-sm mt-1">
-          Hotel-level rules that inform validator judgements on recommendation alignment.
+          Rules stored on-chain. Validators weight them when generating recommendations.
         </p>
       </div>
 
-      {/* Add form */}
-      <form onSubmit={handleAdd} className="glass-card rounded-xl p-6 space-y-4">
-        <p className="text-ivory text-sm font-medium">Add Preference Rule</p>
+      <form onSubmit={handleAdd} className="glass-card rounded-xl p-8 space-y-4">
+        <p className="text-ivory font-medium text-sm mb-2">Add New Rule</p>
 
-        <div className="grid md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="label-dark">Rule Type</label>
             <select className="input-dark" value={ruleType} onChange={(e) => setRuleType(e.target.value)}>
@@ -94,55 +97,39 @@ export default function PreferencesPage() {
             </select>
           </div>
           <div>
-            <label className="label-dark">Priority (1–10)</label>
-            <input
-              type="number"
-              min={1}
-              max={10}
-              className="input-dark"
-              value={priority}
-              onChange={(e) => setPriority(Number(e.target.value))}
-            />
+            <label className="label-dark">Rule Value</label>
+            <input className="input-dark" value={ruleValue} onChange={(e) => setRuleValue(e.target.value)}
+              placeholder="e.g. Always offer ocean-view rooms to platinum guests" required />
           </div>
         </div>
 
         <div>
-          <label className="label-dark">Rule Value</label>
-          <textarea
-            className="input-dark h-20 resize-none"
-            value={ruleValue}
-            onChange={(e) => setRuleValue(e.target.value)}
-            placeholder='e.g. "Platinum guests must be offered a suite upgrade if available"'
-            required
-          />
+          <label className="label-dark">Description (optional)</label>
+          <input className="input-dark" value={description} onChange={(e) => setDescription(e.target.value)}
+            placeholder="Brief note for hotel staff" />
         </div>
 
-        <button type="submit" disabled={submitting || !ruleValue.trim()} className="btn-gold flex items-center gap-2 disabled:opacity-50">
-          <Plus className="w-4 h-4" />
-          {submitting ? "Saving…" : "Add Rule"}
+        <button type="submit" disabled={submitting || !ruleValue.trim()} className="btn-gold w-full disabled:opacity-50 flex items-center justify-center gap-2">
+          <Plus className="w-4 h-4" /> {submitting ? "Submitting…" : "Add Rule"}
         </button>
       </form>
 
-      {/* Rules list */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <p className="mono-text text-gold">{rules.length} rule{rules.length !== 1 ? "s" : ""}</p>
-          <button onClick={() => refetch()} className="btn-ghost text-xs">Refresh</button>
+      {isLoading ? (
+        <div className="space-y-3">{[1, 2].map((i) => <div key={i} className="h-14 shimmer-bg rounded-xl" />)}</div>
+      ) : rules.length === 0 ? (
+        <div className="glass-card rounded-xl p-10 text-center">
+          <p className="display-text text-xl text-ivory mb-2">No rules yet</p>
+          <p className="text-ivory-dim text-sm">Add rules to guide how validators personalise recommendations for your guests.</p>
         </div>
-
-        {isLoading ? (
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => <div key={i} className="h-14 shimmer-bg rounded-xl" />)}
+      ) : (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between mb-1">
+            <p className="mono-text text-gold">{rules.length} rule{rules.length !== 1 ? "s" : ""}</p>
+            <button onClick={() => refetch()} className="btn-ghost text-xs">Refresh</button>
           </div>
-        ) : rules.length === 0 ? (
-          <div className="glass-card rounded-xl p-10 text-center">
-            <p className="display-text text-xl text-ivory mb-2">No rules yet</p>
-            <p className="text-ivory-dim text-sm">Add a preference rule to guide validator scoring.</p>
-          </div>
-        ) : (
-          rules.map((rule) => <RuleRow key={rule.rule_id} rule={rule} onDelete={handleDelete} />)
-        )}
-      </div>
+          {rules.map((rule) => <RuleRow key={rule.rule_id} rule={rule} onDelete={handleDelete} />)}
+        </div>
+      )}
     </div>
   )
 }

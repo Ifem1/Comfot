@@ -79,16 +79,9 @@ export function useRequestRecommendation() {
   const { address } = useAccount()
   const { track } = useTxTracker()
 
-  return async (
-    guestId: string,
-    roomType: string,
-    checkIn: string,
-    checkOut: string,
-    specialContext: string,
-  ) => {
-    const hash = await writeContract("request_recommendation", [
-      guestId, roomType, checkIn, checkOut, specialContext,
-    ])
+  // Contract takes only guest_id — all context is pulled from the stored guest profile
+  return async (guestId: string) => {
+    const hash = await writeContract("request_recommendation", [guestId])
     track(hash, "Request recommendation", {
       invalidateKeys: [
         ["hotel-recs", address ?? ""],
@@ -142,17 +135,18 @@ export function useResolveEscalation() {
   const { address } = useAccount()
   const { track } = useTxTracker()
 
-  return async (escalationId: string, decision: "approved" | "rejected", reviewerNote: string) => {
+  // Contract: resolve_escalation(escalation_id, resolution, resolution_note)
+  return async (escalationId: string, resolution: "approved" | "rejected", resolutionNote: string) => {
     try {
-      const hash = await writeContract("resolve_escalation", [escalationId, decision, reviewerNote])
-      track(hash, `Escalation ${decision}`, [
+      const hash = await writeContract("resolve_escalation", [escalationId, resolution, resolutionNote])
+      track(hash, `Escalation ${resolution}`, [
         ["escalations-pending", address ?? ""],
         ["hotel-recs", address ?? ""],
       ])
       return hash
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Transaction failed"
-      toast.error(`Escalation ${decision} failed`, { description: msg })
+      toast.error(`Escalation ${resolution} failed`, { description: msg })
       throw e
     }
   }

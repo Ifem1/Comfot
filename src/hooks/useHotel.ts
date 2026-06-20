@@ -62,13 +62,14 @@ export function useRegisterHotel() {
   }
 }
 
+// Contract: set_preference_rule(rule_id, rule_type, rule_value, description, active)
 export function useSetPreferenceRule() {
   const { address } = useAccount()
   const { track } = useTxTracker()
 
-  return async (ruleType: string, ruleValue: string, priority: number) => {
+  return async (ruleId: string, ruleType: string, ruleValue: string, description: string, active: boolean) => {
     try {
-      const hash = await writeContract("set_preference_rule", [ruleType, ruleValue, priority])
+      const hash = await writeContract("set_preference_rule", [ruleId, ruleType, ruleValue, description, active])
       track(hash, "Set preference rule", [["preference-rules", address ?? ""]])
       return hash
     } catch (e: unknown) {
