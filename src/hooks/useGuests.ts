@@ -1,8 +1,8 @@
 "use client"
 
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { useAccount, useSendTransaction } from "wagmi"
-import { getHotelGuestIds, getGuest, sendWrite } from "@/lib/genlayer/comfotClient"
+import { useAccount } from "wagmi"
+import { getHotelGuestIds, getGuest, writeContract } from "@/lib/genlayer/comfotClient"
 import type { Guest } from "@/types/contract"
 import { toast } from "sonner"
 
@@ -12,8 +12,7 @@ export function useGuestIds() {
     queryKey: ["guest-ids", address],
     queryFn: async () => {
       if (!address) return []
-      const ids = await getHotelGuestIds(address)
-      return ids ?? []
+      return getHotelGuestIds(address)
     },
     enabled: !!address,
     staleTime: 15_000,
@@ -45,7 +44,6 @@ export function useGuests() {
 }
 
 export function useSubmitGuestProfile() {
-  const { sendTransactionAsync } = useSendTransaction()
   const qc = useQueryClient()
   const { address } = useAccount()
 
@@ -61,14 +59,16 @@ export function useSubmitGuestProfile() {
   ) => {
     const toastId = toast.loading("Submitting guest profile…")
     try {
-      const hash = await sendWrite("submit_guest_profile", [
+      const hash = await writeContract("submit_guest_profile", [
         guestRef, name, loyaltyTier,
         reviewHistory, specialRequests, dietaryNeeds,
         conversationHistory, roomHistory,
-      ], sendTransactionAsync)
+      ])
       toast.success("Guest profile submitted", { id: toastId, description: `tx: ${hash.slice(0, 18)}…` })
-      qc.invalidateQueries({ queryKey: ["guest-ids", address] })
-      qc.invalidateQueries({ queryKey: ["guests", address] })
+      setTimeout(() => {
+        qc.invalidateQueries({ queryKey: ["guest-ids", address] })
+        qc.invalidateQueries({ queryKey: ["guests", address] })
+      }, 4000)
       return hash
     } catch (e: unknown) {
       toast.error("Submission failed", { id: toastId, description: e instanceof Error ? e.message : String(e) })
@@ -78,17 +78,18 @@ export function useSubmitGuestProfile() {
 }
 
 export function useEraseGuestProfile() {
-  const { sendTransactionAsync } = useSendTransaction()
   const qc = useQueryClient()
   const { address } = useAccount()
 
   return async (guestId: string) => {
     const toastId = toast.loading("Erasing guest profile…")
     try {
-      const hash = await sendWrite("erase_guest_profile", [guestId], sendTransactionAsync)
+      const hash = await writeContract("erase_guest_profile", [guestId])
       toast.success("Guest profile erased", { id: toastId })
-      qc.invalidateQueries({ queryKey: ["guest-ids", address] })
-      qc.invalidateQueries({ queryKey: ["guests", address] })
+      setTimeout(() => {
+        qc.invalidateQueries({ queryKey: ["guest-ids", address] })
+        qc.invalidateQueries({ queryKey: ["guests", address] })
+      }, 4000)
       return hash
     } catch (e: unknown) {
       toast.error("Failed", { id: toastId, description: e instanceof Error ? e.message : String(e) })
