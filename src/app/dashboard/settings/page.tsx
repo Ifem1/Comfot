@@ -53,6 +53,8 @@ export default function SettingsPage() {
   const [category, setCategory] = useState("luxury")
   const [amenities, setAmenities] = useState<string[]>([])
   const [rooms, setRooms] = useState<string[]>([])
+  const [packages, setPackages] = useState<string[]>([])
+  const [starRating, setStarRating] = useState(4)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
 
@@ -81,6 +83,8 @@ export default function SettingsPage() {
     setCategory(DEMO_HOTEL.category)
     setAmenities([...DEMO_HOTEL.amenities])
     setRooms([...DEMO_HOTEL.room_types])
+    setPackages([...DEMO_HOTEL.packages])
+    setStarRating(DEMO_HOTEL.star_rating)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -89,7 +93,7 @@ export default function SettingsPage() {
     setSubmitting(true)
     setSubmitError(null)
     try {
-      await registerHotel(name.trim(), category, amenities, rooms)
+      await registerHotel(name.trim(), category, amenities, rooms, packages, starRating)
     } catch (e: unknown) {
       setSubmitError(e instanceof Error ? e.message : "Transaction failed — check MetaMask")
     } finally {
@@ -155,6 +159,20 @@ export default function SettingsPage() {
 
         <TagInput label="Room Types" value={rooms} onChange={setRooms} />
         <TagInput label="Amenities" value={amenities} onChange={setAmenities} />
+        <TagInput label="Packages (optional)" value={packages} onChange={setPackages} />
+
+        <div>
+          <label className="label-dark">Star Rating</label>
+          <select
+            className="input-dark"
+            value={starRating}
+            onChange={(e) => setStarRating(Number(e.target.value))}
+          >
+            {[1, 2, 3, 4, 5].map((s) => (
+              <option key={s} value={s}>{s} star{s > 1 ? "s" : ""}</option>
+            ))}
+          </select>
+        </div>
 
         {submitError && (
           <div className="rounded-lg bg-danger/10 border border-danger/30 px-4 py-3 text-danger text-xs leading-relaxed">
