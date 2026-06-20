@@ -46,9 +46,9 @@ export function useRegisterHotel() {
   const { address } = useAccount()
   const { track } = useTxTracker()
 
-  return async (name: string, category: string, amenities: string[], rooms: string[], packages: string[], starRating: number) => {
+  return async (name: string, propertyType: string, description: string, location: string, amenities: string[], rooms: string[], packages: string[], starRating: number) => {
     try {
-      const hash = await writeContract("register_hotel", [name, category, amenities, rooms, packages, starRating])
+      const hash = await writeContract("register_hotel", [name, propertyType, description, location, amenities, rooms, packages, starRating])
       track(hash, "Register hotel", [
         ["hotel", address ?? ""],
         ["hotel-stats", address ?? ""],

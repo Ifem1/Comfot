@@ -50,7 +50,9 @@ export default function SettingsPage() {
   const { fetchContact, saveContact, loading: contactLoading } = useHotelContact()
 
   const [name, setName] = useState("")
-  const [category, setCategory] = useState("luxury")
+  const [propertyType, setPropertyType] = useState("luxury")
+  const [description, setDescription] = useState("")
+  const [location, setLocation] = useState("")
   const [amenities, setAmenities] = useState<string[]>([])
   const [rooms, setRooms] = useState<string[]>([])
   const [packages, setPackages] = useState<string[]>([])
@@ -80,7 +82,9 @@ export default function SettingsPage() {
 
   const loadDemo = () => {
     setName(DEMO_HOTEL.name)
-    setCategory(DEMO_HOTEL.category)
+    setPropertyType(DEMO_HOTEL.category)
+    setDescription(DEMO_HOTEL.description)
+    setLocation(DEMO_HOTEL.location)
     setAmenities([...DEMO_HOTEL.amenities])
     setRooms([...DEMO_HOTEL.room_types])
     setPackages([...DEMO_HOTEL.packages])
@@ -93,7 +97,7 @@ export default function SettingsPage() {
     setSubmitting(true)
     setSubmitError(null)
     try {
-      await registerHotel(name.trim(), category, amenities, rooms, packages, starRating)
+      await registerHotel(name.trim(), propertyType, description.trim(), location.trim(), amenities, rooms, packages, starRating)
     } catch (e: unknown) {
       setSubmitError(e instanceof Error ? e.message : "Transaction failed — check MetaMask")
     } finally {
@@ -145,21 +149,38 @@ export default function SettingsPage() {
         </div>
 
         <div>
-          <label className="label-dark">Category</label>
+          <label className="label-dark">Property Type</label>
           <select
             className="input-dark"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
+            value={propertyType}
+            onChange={(e) => setPropertyType(e.target.value)}
           >
-            {["budget", "midscale", "upscale", "luxury", "ultra-luxury"].map((c) => (
+            {["luxury", "boutique", "resort", "business", "lifestyle", "budget", "extended_stay", "hostel"].map((c) => (
               <option key={c} value={c}>{c}</option>
             ))}
           </select>
         </div>
 
-        <TagInput label="Room Types" value={rooms} onChange={setRooms} />
-        <TagInput label="Amenities" value={amenities} onChange={setAmenities} />
-        <TagInput label="Packages (optional)" value={packages} onChange={setPackages} />
+        <div>
+          <label className="label-dark">Description</label>
+          <textarea
+            className="input-dark resize-none"
+            rows={3}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="A brief description of your hotel and its character"
+          />
+        </div>
+
+        <div>
+          <label className="label-dark">Location</label>
+          <input
+            className="input-dark"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            placeholder="e.g. Lagos, Nigeria"
+          />
+        </div>
 
         <div>
           <label className="label-dark">Star Rating</label>
@@ -173,6 +194,10 @@ export default function SettingsPage() {
             ))}
           </select>
         </div>
+
+        <TagInput label="Room Types" value={rooms} onChange={setRooms} />
+        <TagInput label="Amenities" value={amenities} onChange={setAmenities} />
+        <TagInput label="Packages (optional)" value={packages} onChange={setPackages} />
 
         {submitError && (
           <div className="rounded-lg bg-danger/10 border border-danger/30 px-4 py-3 text-danger text-xs leading-relaxed">
