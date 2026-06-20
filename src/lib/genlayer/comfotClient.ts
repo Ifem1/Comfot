@@ -8,7 +8,7 @@
  * Network : StudioNet (chainId 61999)
  */
 
-import { createClient } from "genlayer-js"
+import { createClient, abi as glAbi } from "genlayer-js"
 import type { CalldataEncodable } from "genlayer-js/types"
 import { GENLAYER_CONTRACT_ADDRESS, STUDIO_NET } from "./config"
 import type {
@@ -32,25 +32,6 @@ function getReadClient() {
     })
   }
   return _readClient
-}
-
-/** Returns a write-capable client using window.ethereum as the provider + connected account. */
-async function getWriteClient() {
-  if (typeof window === "undefined" || !window.ethereum) {
-    throw new Error("No injected wallet found. Please install MetaMask.")
-  }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const provider = window.ethereum as any
-  const accounts: string[] = await provider.request({ method: "eth_accounts" })
-  if (!accounts || accounts.length === 0) {
-    throw new Error("No wallet account connected. Please connect MetaMask first.")
-  }
-  return createClient({
-    chain: STUDIO_NET,
-    endpoint: STUDIO_NET.rpcUrls.default.http[0],
-    account: accounts[0] as `0x${string}`,
-    provider,
-  })
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -78,21 +59,41 @@ async function read<T = CalldataEncodable>(
 }
 
 // ─────────────────────────────────────────────────────────────
-// WRITE — returns tx hash string
+// WRITE — encode via genlayer-js abi utilities, send via MetaMask
+// Bypasses client.writeContract() which fails on StudioNet (BigInt
+// conversion bug in SDK gas/nonce handling with injected provider).
 // ─────────────────────────────────────────────────────────────
 
 export async function writeContract(
   functionName: string,
   args: CalldataEncodable[] = []
 ): Promise<string> {
-  const client = await getWriteClient()
-  const hash = await client.writeContract({
-    address: GENLAYER_CONTRACT_ADDRESS,
-    functionName,
-    args,
-    value: BigInt(0),
+  if (typeof window === "undefined" || !window.ethereum) {
+    throw new Error("No injected wallet found. Please install MetaMask.")
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const provider = window.ethereum as any
+  const accounts: string[] = await provider.request({ method: "eth_requestAccounts" })
+  if (!accounts || accounts.length === 0) {
+    throw new Error("No wallet account connected. Please connect MetaMask first.")
+  }
+
+  // Encode calldata using genlayer-js ABI utilities
+  const calldataObj = glAbi.calldata.makeCalldataObject(functionName, args, undefined)
+  const encoded = glAbi.calldata.encode(calldataObj)
+  const data = glAbi.transactions.serializeOne(encoded)
+
+  // Send via MetaMask → StudioNet RPC endpoint
+  const txHash: string = await provider.request({
+    method: "eth_sendTransaction",
+    params: [{
+      from: accounts[0],
+      to: GENLAYER_CONTRACT_ADDRESS,
+      data,
+      value: "0x0",
+    }],
   })
-  return hash as string
+  return txHash
 }
 
 // ─────────────────────────────────────────────────────────────

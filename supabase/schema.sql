@@ -94,3 +94,11 @@ create trigger set_updated_at_hotel_contacts
 alter table public.guest_pii        disable row level security;
 alter table public.hotel_contacts   disable row level security;
 alter table public.notifications    disable row level security;
+
+-- ────────────────────────────────────────────────────────────
+-- Explicit grants for service_role (required in some Supabase
+-- configurations even when RLS is disabled).
+-- ────────────────────────────────────────────────────────────
+grant all on public.guest_pii      to service_role;
+grant all on public.hotel_contacts to service_role;
+grant all on public.notifications  to service_role;

@@ -2,7 +2,7 @@
 
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { useAccount, useSwitchChain } from "wagmi"
+import { useAccount, useDisconnect, useSwitchChain } from "wagmi"
 import { Sidebar } from "@/components/layout/Sidebar"
 import { TopNav } from "@/components/layout/TopNav"
 import { Loader2, AlertTriangle } from "lucide-react"
@@ -16,7 +16,7 @@ function TxRecoveryMount() {
 
 function WrongNetworkOverlay() {
   const { switchChain, isPending } = useSwitchChain()
-  const { disconnect } = useAccount()
+  const { disconnect } = useDisconnect()
 
   return (
     <div className="min-h-screen bg-espresso flex items-center justify-center px-6">
