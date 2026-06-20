@@ -157,7 +157,7 @@ class ComfotContract(gl.Contract):
         packages: list[str],
         star_rating: int,
     ) -> None:
-        caller = gl.message.sender_address
+        caller = str(gl.message.sender_address).lower()
 
         name = name.strip()
         property_type = property_type.strip().lower()
@@ -216,7 +216,7 @@ class ComfotContract(gl.Contract):
 
     @gl.public.write
     def deactivate_hotel(self) -> None:
-        caller = gl.message.sender_address
+        caller = str(gl.message.sender_address).lower()
         hotel = self._require_hotel(caller)
         hotel["active"] = False
         self.hotels[caller] = self._dump(hotel)
@@ -241,7 +241,7 @@ class ComfotContract(gl.Contract):
         description: str,
         active: bool,
     ) -> None:
-        caller = gl.message.sender_address
+        caller = str(gl.message.sender_address).lower()
         self._require_active_hotel(caller)
 
         rule_id = rule_id.strip()
@@ -290,7 +290,7 @@ class ComfotContract(gl.Contract):
 
     @gl.public.write
     def delete_preference_rule(self, rule_id: str) -> None:
-        caller = gl.message.sender_address
+        caller = str(gl.message.sender_address).lower()
         self._require_active_hotel(caller)
 
         rules = self._load_list(self.preference_rules.get(caller, ""))
@@ -327,7 +327,7 @@ class ComfotContract(gl.Contract):
         room_history: list[str],
         language: str,
     ) -> str:
-        caller = gl.message.sender_address
+        caller = str(gl.message.sender_address).lower()
         self._require_active_hotel(caller)
 
         guest_ref = guest_ref.strip()
@@ -411,7 +411,7 @@ class ComfotContract(gl.Contract):
 
     @gl.public.write
     def erase_guest_profile(self, guest_id: str) -> None:
-        caller = gl.message.sender_address
+        caller = str(gl.message.sender_address).lower()
         guest = self._require_guest(guest_id)
 
         assert guest.get("hotel_address") == caller, "Guest does not belong to this hotel"
@@ -439,7 +439,7 @@ class ComfotContract(gl.Contract):
 
     @gl.public.write
     def request_recommendation(self, guest_id: str) -> str:
-        caller = gl.message.sender_address
+        caller = str(gl.message.sender_address).lower()
 
         hotel = self._require_active_hotel(caller)
         guest = self._require_guest(guest_id)
@@ -925,7 +925,7 @@ approve, reject, escalate.
         resolution: str,
         resolution_note: str,
     ) -> None:
-        caller = gl.message.sender_address
+        caller = str(gl.message.sender_address).lower()
         self._require_active_hotel(caller)
 
         esc = self._load(self.escalations.get(escalation_id, ""))
@@ -1311,7 +1311,7 @@ approve, reject, escalate.
             return []
 
     def _dump(self, value) -> str:
-        return json.dumps(value, sort_keys=True)
+        return json.dumps(value, sort_keys=True, default=str)
 
     def _to_int(self, value) -> int:
         try:
