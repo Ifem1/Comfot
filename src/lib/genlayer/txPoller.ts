@@ -79,7 +79,7 @@ export function isSuccess(status: TxStatus): boolean {
 // ─────────────────────────────────────────────────────────────
 
 const POLL_INTERVAL_MS = 3000
-const MAX_RETRIES = 60  // 3s × 60 = 3 min timeout
+const MAX_RETRIES = 200  // 3s × 200 = 10 min — GenLayer consensus can take several minutes
 
 let _client: ReturnType<typeof createClient> | null = null
 function getClient() {

@@ -2,9 +2,9 @@
 
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { useAccount, useConnect, useDisconnect } from "wagmi"
+import { useAccount, useConnect, useDisconnect, useSwitchChain } from "wagmi"
 import { toast } from "sonner"
-import { ArrowRight, Wifi, WifiOff, ExternalLink } from "lucide-react"
+import { ArrowRight, Wifi, WifiOff, ExternalLink, AlertTriangle } from "lucide-react"
 import { GENLAYER_CONTRACT_ADDRESS, GENLAYER_CHAIN_ID, studioContractLink } from "@/lib/genlayer/config"
 
 export default function ConnectPage() {
@@ -12,6 +12,7 @@ export default function ConnectPage() {
   const { address, isConnected, chain } = useAccount()
   const { connect, connectors, isPending } = useConnect()
   const { disconnect } = useDisconnect()
+  const { switchChain, isPending: isSwitching } = useSwitchChain()
 
   useEffect(() => {
     if (isConnected) {
@@ -74,9 +75,19 @@ export default function ConnectPage() {
                 Chain: {chain?.name ?? "Unknown"} ({chain?.id})
               </p>
               {wrongChain && (
-                <p className="text-warning text-xs mt-3">
-                  Wrong chain detected. Switch to StudioNet (chain ID {GENLAYER_CHAIN_ID}) in MetaMask.
-                </p>
+                <div className="mt-3 space-y-2">
+                  <div className="flex items-center gap-1.5 text-warning text-xs">
+                    <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                    Wrong network — switch to StudioNet (chain ID {GENLAYER_CHAIN_ID})
+                  </div>
+                  <button
+                    onClick={() => switchChain({ chainId: GENLAYER_CHAIN_ID })}
+                    disabled={isSwitching}
+                    className="w-full text-xs px-3 py-2 rounded bg-warning/10 border border-warning/30 text-warning hover:bg-warning/20 transition-colors disabled:opacity-50"
+                  >
+                    {isSwitching ? "Switching…" : "Switch to StudioNet"}
+                  </button>
+                </div>
               )}
               <p className="text-ivory-dim text-xs mt-4 animate-fade-in">
                 Redirecting to console…

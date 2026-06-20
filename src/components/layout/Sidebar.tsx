@@ -8,6 +8,8 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAppStore } from "@/store/useAppStore"
+import { useHotel } from "@/hooks/useHotel"
+import { useAccount } from "wagmi"
 
 const NAV = [
   { href: "/dashboard",                  label: "Hotel Console",      icon: LayoutDashboard },
@@ -23,6 +25,8 @@ const NAV = [
 export function Sidebar() {
   const pathname = usePathname()
   const { sidebarOpen, setSidebarOpen } = useAppStore()
+  const { address } = useAccount()
+  const { data: hotel } = useHotel()
 
   return (
     <>
@@ -40,14 +44,23 @@ export function Sidebar() {
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        {/* Logo */}
+        {/* Logo + hotel identity */}
         <div className="px-5 h-16 flex items-center justify-between border-b border-border">
-          <Link href="/dashboard" className="display-text text-2xl font-light text-ivory hover:text-gold transition-colors">
-            Comfot
+          <Link href="/dashboard" className="min-w-0">
+            <div className="display-text text-2xl font-light text-ivory hover:text-gold transition-colors leading-none">
+              Comfot
+            </div>
+            {hotel ? (
+              <div className="text-ivory-faint text-xs truncate mt-0.5 max-w-[160px]" title={hotel.name}>
+                {hotel.name}
+              </div>
+            ) : address ? (
+              <div className="mono-text text-ivory-faint text-xs mt-0.5">Not registered</div>
+            ) : null}
           </Link>
           <button
             onClick={() => setSidebarOpen(false)}
-            className="lg:hidden text-ivory-dim hover:text-ivory"
+            className="lg:hidden text-ivory-dim hover:text-ivory shrink-0 ml-2"
           >
             <X className="w-4 h-4" />
           </button>
@@ -78,11 +91,17 @@ export function Sidebar() {
         </nav>
 
         {/* Status badge */}
-        <div className="px-4 py-4 border-t border-border">
+        <div className="px-4 py-4 border-t border-border space-y-2">
           <div className="rounded px-3 py-2.5 flex items-center gap-2 bg-success/5 border border-success/10">
             <span className="w-1.5 h-1.5 rounded-full bg-success animate-glow-pulse" />
-            <span className="mono-text text-success">StudioNet · Live</span>
+            <span className="mono-text text-success text-xs">StudioNet · Live</span>
           </div>
+          {hotel && (
+            <div className="rounded px-3 py-2 flex items-center gap-2 bg-gold/5 border border-gold/10">
+              <span className="w-1.5 h-1.5 rounded-full bg-gold" />
+              <span className="mono-text text-gold text-xs truncate">{hotel.category}</span>
+            </div>
+          )}
         </div>
       </aside>
     </>
