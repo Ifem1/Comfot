@@ -66,6 +66,11 @@ function nonEmpty<T extends object>(val: T | null | undefined): T | null {
   return val
 }
 
+// Contract stores all addresses lowercase — normalise before querying
+function addr(a: string): string {
+  return a.toLowerCase()
+}
+
 async function read<T = CalldataEncodable>(
   functionName: string,
   args: CalldataEncodable[] = []
@@ -142,7 +147,7 @@ export async function writeContract(
 // ─────────────────────────────────────────────────────────────
 
 export async function getHotel(hotelAddress: string): Promise<Hotel | null> {
-  const result = await read<Hotel>("get_hotel", [hotelAddress])
+  const result = await read<Hotel>("get_hotel", [addr(hotelAddress)])
   return nonEmpty(result)
 }
 
@@ -152,7 +157,7 @@ export async function getGuest(guestId: string): Promise<Guest | null> {
 }
 
 export async function getGuestId(hotelAddress: string, guestRef: string): Promise<string> {
-  return read<string>("get_guest_id", [hotelAddress, guestRef])
+  return read<string>("get_guest_id", [addr(hotelAddress), guestRef])
 }
 
 export async function getRecommendation(recId: string): Promise<Recommendation | null> {
@@ -176,7 +181,7 @@ export async function getEscalation(escalationId: string): Promise<Escalation | 
 }
 
 export async function getHotelGuestIds(hotelAddress: string): Promise<string[]> {
-  const result = await read<string[]>("get_hotel_guest_ids", [hotelAddress])
+  const result = await read<string[]>("get_hotel_guest_ids", [addr(hotelAddress)])
   return result ?? []
 }
 
@@ -191,7 +196,7 @@ export async function getGuestRecommendations(guestId: string): Promise<Recommen
 }
 
 export async function getHotelRecommendations(hotelAddress: string): Promise<Recommendation[]> {
-  const result = await read<Recommendation[]>("get_hotel_recommendations", [hotelAddress])
+  const result = await read<Recommendation[]>("get_hotel_recommendations", [addr(hotelAddress)])
   return result ?? []
 }
 
@@ -199,27 +204,27 @@ export async function getHotelRecommendationsByStatus(
   hotelAddress: string,
   status: string
 ): Promise<Recommendation[]> {
-  const result = await read<Recommendation[]>("get_hotel_recommendations_by_status", [hotelAddress, status])
+  const result = await read<Recommendation[]>("get_hotel_recommendations_by_status", [addr(hotelAddress), status])
   return result ?? []
 }
 
 export async function getHotelEscalations(hotelAddress: string): Promise<Escalation[]> {
-  const result = await read<Escalation[]>("get_hotel_escalations", [hotelAddress])
+  const result = await read<Escalation[]>("get_hotel_escalations", [addr(hotelAddress)])
   return result ?? []
 }
 
 export async function getPendingEscalations(hotelAddress: string): Promise<Escalation[]> {
-  const result = await read<Escalation[]>("get_pending_escalations", [hotelAddress])
+  const result = await read<Escalation[]>("get_pending_escalations", [addr(hotelAddress)])
   return result ?? []
 }
 
 export async function getPreferenceRules(hotelAddress: string): Promise<PreferenceRule[]> {
-  const result = await read<PreferenceRule[]>("get_preference_rules", [hotelAddress])
+  const result = await read<PreferenceRule[]>("get_preference_rules", [addr(hotelAddress)])
   return result ?? []
 }
 
 export async function getHotelStats(hotelAddress: string): Promise<HotelStats | null> {
-  const result = await read<HotelStats>("get_hotel_stats", [hotelAddress])
+  const result = await read<HotelStats>("get_hotel_stats", [addr(hotelAddress)])
   return nonEmpty(result)
 }
 
