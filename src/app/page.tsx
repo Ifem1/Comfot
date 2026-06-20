@@ -11,6 +11,7 @@ import {
 } from "lucide-react"
 import { GENLAYER_CONTRACT_ADDRESS, studioContractLink } from "@/lib/genlayer/config"
 import { unsplash, SITE_IMAGES } from "@/lib/images"
+import { GlowCard } from "@/components/ui/GlowCard"
 
 const fadeUp = {
   hidden: { opacity: 0, y: 32 },
@@ -303,25 +304,31 @@ export default function LandingPage() {
           </FadeUp>
           <StaggerSection className="grid md:grid-cols-3 gap-6">
             <StaggerItem>
-              <motion.div whileHover={{ y: -4, transition: { duration: 0.2 } }} className="glass-card rounded-xl p-6 border border-success/20 h-full">
-                <div className="flex items-center gap-2 mb-4"><CheckCircle className="w-5 h-5 text-success" /><span className="mono-text text-success font-medium">APPROVED</span></div>
-                <p className="text-ivory-dim text-sm leading-relaxed mb-4">Alignment score ≥ 75. Validators agree the recommendation meaningfully matches the guest&apos;s documented needs. Safe to action.</p>
-                <p className="mono-text text-xs text-ivory-faint">Score ≥ 75 · consensus achieved</p>
-              </motion.div>
+              <GlowCard glowColor="success" className="h-full">
+                <div className="glass-card rounded-xl p-6 border border-success/20 h-full">
+                  <div className="flex items-center gap-2 mb-4"><CheckCircle className="w-5 h-5 text-success" /><span className="mono-text text-success font-medium">APPROVED</span></div>
+                  <p className="text-ivory-dim text-sm leading-relaxed mb-4">Alignment score ≥ 75. Validators agree the recommendation meaningfully matches the guest&apos;s documented needs. Safe to action.</p>
+                  <p className="mono-text text-xs text-ivory-faint">Score ≥ 75 · consensus achieved</p>
+                </div>
+              </GlowCard>
             </StaggerItem>
             <StaggerItem>
-              <motion.div whileHover={{ y: -4, transition: { duration: 0.2 } }} className="glass-card rounded-xl p-6 border border-warning/20 h-full">
-                <div className="flex items-center gap-2 mb-4"><AlertCircle className="w-5 h-5 text-warning" /><span className="mono-text text-warning font-medium">ESCALATED</span></div>
-                <p className="text-ivory-dim text-sm leading-relaxed mb-4">Score 45–74. Evidence is thin or alignment is uncertain. A human reviewer at the hotel must approve or reject before use.</p>
-                <p className="mono-text text-xs text-ivory-faint">Score 45–74 · human review</p>
-              </motion.div>
+              <GlowCard glowColor="warning" className="h-full">
+                <div className="glass-card rounded-xl p-6 border border-warning/20 h-full">
+                  <div className="flex items-center gap-2 mb-4"><AlertCircle className="w-5 h-5 text-warning" /><span className="mono-text text-warning font-medium">ESCALATED</span></div>
+                  <p className="text-ivory-dim text-sm leading-relaxed mb-4">Score 45–74. Evidence is thin or alignment is uncertain. A human reviewer at the hotel must approve or reject before use.</p>
+                  <p className="mono-text text-xs text-ivory-faint">Score 45–74 · human review</p>
+                </div>
+              </GlowCard>
             </StaggerItem>
             <StaggerItem>
-              <motion.div whileHover={{ y: -4, transition: { duration: 0.2 } }} className="glass-card rounded-xl p-6 border border-danger/20 h-full">
-                <div className="flex items-center gap-2 mb-4"><XCircle className="w-5 h-5 text-danger" /><span className="mono-text text-danger font-medium">REJECTED</span></div>
-                <p className="text-ivory-dim text-sm leading-relaxed mb-4">Score &lt; 45 or the recommendation directly contradicts a documented guest need. Do not use — re-submit after updating the guest profile.</p>
-                <p className="mono-text text-xs text-ivory-faint">Score &lt; 45 · do not use</p>
-              </motion.div>
+              <GlowCard glowColor="danger" className="h-full">
+                <div className="glass-card rounded-xl p-6 border border-danger/20 h-full">
+                  <div className="flex items-center gap-2 mb-4"><XCircle className="w-5 h-5 text-danger" /><span className="mono-text text-danger font-medium">REJECTED</span></div>
+                  <p className="text-ivory-dim text-sm leading-relaxed mb-4">Score &lt; 45 or the recommendation directly contradicts a documented guest need. Do not use — re-submit after updating the guest profile.</p>
+                  <p className="mono-text text-xs text-ivory-faint">Score &lt; 45 · do not use</p>
+                </div>
+              </GlowCard>
             </StaggerItem>
           </StaggerSection>
         </div>
@@ -378,13 +385,15 @@ export default function LandingPage() {
               { title: "Notification Alerts", desc: "Email alerts via Brevo when recommendations are escalated, finalized, or rejected. Configurable per hotel with per-event toggles." },
             ].map((f) => (
               <StaggerItem key={f.title}>
-                <motion.div whileHover={{ y: -4, transition: { duration: 0.2 } }} className="glass-card rounded-xl p-6 h-full">
-                  <div className="flex items-center gap-2 mb-3">
-                    <ChevronRight className="w-4 h-4 text-gold shrink-0" />
-                    <h3 className="text-ivory font-medium text-sm">{f.title}</h3>
+                <GlowCard glowColor="gold" className="h-full">
+                  <div className="glass-card rounded-xl p-6 h-full">
+                    <div className="flex items-center gap-2 mb-3">
+                      <ChevronRight className="w-4 h-4 text-gold shrink-0" />
+                      <h3 className="text-ivory font-medium text-sm">{f.title}</h3>
+                    </div>
+                    <p className="text-ivory-dim text-sm leading-relaxed">{f.desc}</p>
                   </div>
-                  <p className="text-ivory-dim text-sm leading-relaxed">{f.desc}</p>
-                </motion.div>
+                </GlowCard>
               </StaggerItem>
             ))}
           </StaggerSection>

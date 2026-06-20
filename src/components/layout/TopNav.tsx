@@ -1,8 +1,9 @@
 "use client"
 
 import { useAccount, useDisconnect } from "wagmi"
-import { Menu, LogOut, Copy, Check, ExternalLink } from "lucide-react"
+import { Menu, LogOut, Copy, Check, ExternalLink, Home } from "lucide-react"
 import { useState } from "react"
+import Link from "next/link"
 import { formatAddress } from "@/lib/utils"
 import { useAppStore } from "@/store/useAppStore"
 import { useRouter } from "next/navigation"
@@ -46,6 +47,9 @@ export function TopNav({ title }: { title?: string }) {
       </div>
 
       <div className="flex items-center gap-3">
+        <Link href="/" className="hidden md:flex items-center gap-1.5 text-ivory-faint hover:text-gold transition-colors text-xs mono-text">
+          <Home className="w-3.5 h-3.5" /> Home
+        </Link>
         <TxTray />
         <a
           href={studioContractLink(GENLAYER_CONTRACT_ADDRESS)}

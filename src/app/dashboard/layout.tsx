@@ -8,6 +8,7 @@ import { TopNav } from "@/components/layout/TopNav"
 import { Loader2, AlertTriangle } from "lucide-react"
 import { useTxRecovery } from "@/hooks/useTxPoller"
 import { GENLAYER_CHAIN_ID } from "@/lib/genlayer/config"
+import { SparkleBackground } from "@/components/ui/SparkleBackground"
 
 function TxRecoveryMount() {
   useTxRecovery()
@@ -72,7 +73,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <div className="min-h-screen bg-espresso flex">
+    <div className="min-h-screen bg-espresso flex relative">
+      <SparkleBackground />
       <TxRecoveryMount />
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
