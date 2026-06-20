@@ -5,6 +5,7 @@ import { useAccount } from "wagmi"
 import { getHotelGuestIds, getGuest, writeContract } from "@/lib/genlayer/comfotClient"
 import type { Guest } from "@/types/contract"
 import { useTxTracker } from "@/hooks/useTxPoller"
+import { toast } from "sonner"
 
 export function useGuestIds() {
   const { address } = useAccount()
@@ -57,16 +58,22 @@ export function useSubmitGuestProfile() {
     conversationHistory: string[],
     roomHistory: string[],
   ) => {
-    const hash = await writeContract("submit_guest_profile", [
-      guestRef, name, loyaltyTier,
-      reviewHistory, specialRequests, dietaryNeeds,
-      conversationHistory, roomHistory,
-    ])
-    track(hash, `Submit guest: ${name}`, [
-      ["guest-ids", address ?? ""],
-      ["guests", address ?? ""],
-    ])
-    return hash
+    try {
+      const hash = await writeContract("submit_guest_profile", [
+        guestRef, name, loyaltyTier,
+        reviewHistory, specialRequests, dietaryNeeds,
+        conversationHistory, roomHistory,
+      ])
+      track(hash, `Submit guest: ${name}`, [
+        ["guest-ids", address ?? ""],
+        ["guests", address ?? ""],
+      ])
+      return hash
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Transaction failed"
+      toast.error("Submit guest failed", { description: msg })
+      throw e
+    }
   }
 }
 
@@ -75,11 +82,17 @@ export function useEraseGuestProfile() {
   const { track } = useTxTracker()
 
   return async (guestId: string) => {
-    const hash = await writeContract("erase_guest_profile", [guestId])
-    track(hash, "Erase guest profile", [
-      ["guest-ids", address ?? ""],
-      ["guests", address ?? ""],
-    ])
-    return hash
+    try {
+      const hash = await writeContract("erase_guest_profile", [guestId])
+      track(hash, "Erase guest profile", [
+        ["guest-ids", address ?? ""],
+        ["guests", address ?? ""],
+      ])
+      return hash
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Transaction failed"
+      toast.error("Erase guest failed", { description: msg })
+      throw e
+    }
   }
 }

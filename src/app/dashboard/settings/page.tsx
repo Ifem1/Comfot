@@ -54,6 +54,7 @@ export default function SettingsPage() {
   const [amenities, setAmenities] = useState<string[]>([])
   const [rooms, setRooms] = useState<string[]>([])
   const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   // Notification contact state
   const [contactEmail, setContactEmail] = useState("")
@@ -70,6 +71,8 @@ export default function SettingsPage() {
         setNotifyEscalations(c.notify_escalations)
         setNotifyFinalized(c.notify_finalized)
       }
+    }).catch(() => {
+      // notification prefs unavailable — form still works
     })
   }, [address, fetchContact])
 
@@ -84,8 +87,11 @@ export default function SettingsPage() {
     e.preventDefault()
     if (!name.trim() || rooms.length === 0) return
     setSubmitting(true)
+    setSubmitError(null)
     try {
       await registerHotel(name.trim(), category, amenities, rooms)
+    } catch (e: unknown) {
+      setSubmitError(e instanceof Error ? e.message : "Transaction failed — check MetaMask")
     } finally {
       setSubmitting(false)
     }
@@ -149,6 +155,12 @@ export default function SettingsPage() {
 
         <TagInput label="Room Types" value={rooms} onChange={setRooms} />
         <TagInput label="Amenities" value={amenities} onChange={setAmenities} />
+
+        {submitError && (
+          <div className="rounded-lg bg-danger/10 border border-danger/30 px-4 py-3 text-danger text-xs leading-relaxed">
+            {submitError}
+          </div>
+        )}
 
         <button
           type="submit"

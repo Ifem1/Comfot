@@ -12,6 +12,7 @@ import {
 } from "@/lib/genlayer/comfotClient"
 import type { Recommendation, Validation, Escalation } from "@/types/contract"
 import { useTxTracker } from "@/hooks/useTxPoller"
+import { toast } from "sonner"
 
 export function useGuestRecommendations(guestId: string | null) {
   return useQuery<Recommendation[]>({
@@ -142,11 +143,17 @@ export function useResolveEscalation() {
   const { track } = useTxTracker()
 
   return async (escalationId: string, decision: "approved" | "rejected", reviewerNote: string) => {
-    const hash = await writeContract("resolve_escalation", [escalationId, decision, reviewerNote])
-    track(hash, `Escalation ${decision}`, [
-      ["escalations-pending", address ?? ""],
-      ["hotel-recs", address ?? ""],
-    ])
-    return hash
+    try {
+      const hash = await writeContract("resolve_escalation", [escalationId, decision, reviewerNote])
+      track(hash, `Escalation ${decision}`, [
+        ["escalations-pending", address ?? ""],
+        ["hotel-recs", address ?? ""],
+      ])
+      return hash
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Transaction failed"
+      toast.error(`Escalation ${decision} failed`, { description: msg })
+      throw e
+    }
   }
 }

@@ -7,6 +7,7 @@ import {
 } from "@/lib/genlayer/comfotClient"
 import type { Hotel, HotelStats, PreferenceRule } from "@/types/contract"
 import { useTxTracker } from "@/hooks/useTxPoller"
+import { toast } from "sonner"
 
 export function useHotel() {
   const { address } = useAccount()
@@ -46,12 +47,18 @@ export function useRegisterHotel() {
   const { track } = useTxTracker()
 
   return async (name: string, category: string, amenities: string[], rooms: string[]) => {
-    const hash = await writeContract("register_hotel", [name, category, amenities, rooms])
-    track(hash, "Register hotel", [
-      ["hotel", address ?? ""],
-      ["hotel-stats", address ?? ""],
-    ])
-    return hash
+    try {
+      const hash = await writeContract("register_hotel", [name, category, amenities, rooms])
+      track(hash, "Register hotel", [
+        ["hotel", address ?? ""],
+        ["hotel-stats", address ?? ""],
+      ])
+      return hash
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Transaction failed"
+      toast.error("Register hotel failed", { description: msg })
+      throw e
+    }
   }
 }
 
@@ -60,9 +67,15 @@ export function useSetPreferenceRule() {
   const { track } = useTxTracker()
 
   return async (ruleType: string, ruleValue: string, priority: number) => {
-    const hash = await writeContract("set_preference_rule", [ruleType, ruleValue, priority])
-    track(hash, "Set preference rule", [["preference-rules", address ?? ""]])
-    return hash
+    try {
+      const hash = await writeContract("set_preference_rule", [ruleType, ruleValue, priority])
+      track(hash, "Set preference rule", [["preference-rules", address ?? ""]])
+      return hash
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Transaction failed"
+      toast.error("Set preference rule failed", { description: msg })
+      throw e
+    }
   }
 }
 
@@ -71,8 +84,14 @@ export function useDeletePreferenceRule() {
   const { track } = useTxTracker()
 
   return async (ruleId: string) => {
-    const hash = await writeContract("delete_preference_rule", [ruleId])
-    track(hash, "Delete preference rule", [["preference-rules", address ?? ""]])
-    return hash
+    try {
+      const hash = await writeContract("delete_preference_rule", [ruleId])
+      track(hash, "Delete preference rule", [["preference-rules", address ?? ""]])
+      return hash
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Transaction failed"
+      toast.error("Delete preference rule failed", { description: msg })
+      throw e
+    }
   }
 }

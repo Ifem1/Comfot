@@ -272,6 +272,8 @@ export default function GuestsPage() {
       await submitGuest(guestRef, name, loyaltyTier, reviews, requests, dietary, convos, roomHistory)
       setShowForm(false)
       resetForm()
+    } catch {
+      // error already toasted in hook
     } finally {
       setSubmitting(false)
     }
