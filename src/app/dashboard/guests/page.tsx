@@ -5,7 +5,6 @@ import { useGuests, useSubmitGuestProfile, useEraseGuestProfile } from "@/hooks/
 import { useHotel } from "@/hooks/useHotel"
 import { Plus, X, Trash2, ChevronDown, ChevronRight } from "lucide-react"
 import { DEMO_GUEST } from "@/lib/genlayer/config"
-import { studioTxLink } from "@/lib/genlayer/config"
 import type { Guest } from "@/types/contract"
 import { cn } from "@/lib/utils"
 
@@ -113,7 +112,6 @@ export default function GuestsPage() {
 
   const [showForm, setShowForm] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-  const [txHash, setTxHash] = useState<string | null>(null)
 
   const [guestRef, setGuestRef] = useState("")
   const [name, setName] = useState("")
@@ -139,8 +137,7 @@ export default function GuestsPage() {
     e.preventDefault()
     setSubmitting(true)
     try {
-      const hash = await submitGuest(guestRef, name, loyaltyTier, reviews, requests, dietary, convos, roomHistory)
-      setTxHash(hash)
+      await submitGuest(guestRef, name, loyaltyTier, reviews, requests, dietary, convos, roomHistory)
       setShowForm(false)
     } finally {
       setSubmitting(false)
@@ -167,13 +164,6 @@ export default function GuestsPage() {
           <Plus className="w-4 h-4" /> New Guest
         </button>
       </div>
-
-      {txHash && (
-        <div className="glass-card rounded-xl p-5 border border-success/20">
-          <p className="text-success text-sm mb-1">Profile submitted on-chain</p>
-          <a href={studioTxLink(txHash)} target="_blank" rel="noopener noreferrer" className="mono-text text-xs text-gold-dim hover:text-gold break-all">{txHash}</a>
-        </div>
-      )}
 
       {showForm && (
         <form onSubmit={handleSubmit} className="glass-card rounded-xl p-8 space-y-5 animate-fade-in">

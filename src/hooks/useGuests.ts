@@ -1,10 +1,10 @@
 "use client"
 
-import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useQuery } from "@tanstack/react-query"
 import { useAccount } from "wagmi"
 import { getHotelGuestIds, getGuest, writeContract } from "@/lib/genlayer/comfotClient"
 import type { Guest } from "@/types/contract"
-import { toast } from "sonner"
+import { useTxTracker } from "@/hooks/useTxPoller"
 
 export function useGuestIds() {
   const { address } = useAccount()
@@ -44,8 +44,8 @@ export function useGuests() {
 }
 
 export function useSubmitGuestProfile() {
-  const qc = useQueryClient()
   const { address } = useAccount()
+  const { track } = useTxTracker()
 
   return async (
     guestRef: string,
@@ -57,43 +57,29 @@ export function useSubmitGuestProfile() {
     conversationHistory: string[],
     roomHistory: string[],
   ) => {
-    const toastId = toast.loading("Submitting guest profile…")
-    try {
-      const hash = await writeContract("submit_guest_profile", [
-        guestRef, name, loyaltyTier,
-        reviewHistory, specialRequests, dietaryNeeds,
-        conversationHistory, roomHistory,
-      ])
-      toast.success("Guest profile submitted", { id: toastId, description: `tx: ${hash.slice(0, 18)}…` })
-      setTimeout(() => {
-        qc.invalidateQueries({ queryKey: ["guest-ids", address] })
-        qc.invalidateQueries({ queryKey: ["guests", address] })
-      }, 4000)
-      return hash
-    } catch (e: unknown) {
-      toast.error("Submission failed", { id: toastId, description: e instanceof Error ? e.message : String(e) })
-      throw e
-    }
+    const hash = await writeContract("submit_guest_profile", [
+      guestRef, name, loyaltyTier,
+      reviewHistory, specialRequests, dietaryNeeds,
+      conversationHistory, roomHistory,
+    ])
+    track(hash, `Submit guest: ${name}`, [
+      ["guest-ids", address ?? ""],
+      ["guests", address ?? ""],
+    ])
+    return hash
   }
 }
 
 export function useEraseGuestProfile() {
-  const qc = useQueryClient()
   const { address } = useAccount()
+  const { track } = useTxTracker()
 
   return async (guestId: string) => {
-    const toastId = toast.loading("Erasing guest profile…")
-    try {
-      const hash = await writeContract("erase_guest_profile", [guestId])
-      toast.success("Guest profile erased", { id: toastId })
-      setTimeout(() => {
-        qc.invalidateQueries({ queryKey: ["guest-ids", address] })
-        qc.invalidateQueries({ queryKey: ["guests", address] })
-      }, 4000)
-      return hash
-    } catch (e: unknown) {
-      toast.error("Failed", { id: toastId, description: e instanceof Error ? e.message : String(e) })
-      throw e
-    }
+    const hash = await writeContract("erase_guest_profile", [guestId])
+    track(hash, "Erase guest profile", [
+      ["guest-ids", address ?? ""],
+      ["guests", address ?? ""],
+    ])
+    return hash
   }
 }

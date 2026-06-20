@@ -6,6 +6,12 @@ import { useAccount } from "wagmi"
 import { Sidebar } from "@/components/layout/Sidebar"
 import { TopNav } from "@/components/layout/TopNav"
 import { Loader2 } from "lucide-react"
+import { useTxRecovery } from "@/hooks/useTxPoller"
+
+function TxRecoveryMount() {
+  useTxRecovery()
+  return null
+}
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { isConnected, isConnecting } = useAccount()
@@ -29,6 +35,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-screen bg-espresso flex">
+      <TxRecoveryMount />
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <TopNav />

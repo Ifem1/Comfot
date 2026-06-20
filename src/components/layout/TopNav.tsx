@@ -8,6 +8,7 @@ import { useAppStore } from "@/store/useAppStore"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { GENLAYER_CONTRACT_ADDRESS, studioContractLink } from "@/lib/genlayer/config"
+import { TxTray } from "@/components/TxTray"
 
 export function TopNav({ title }: { title?: string }) {
   const { address } = useAccount()
@@ -45,6 +46,7 @@ export function TopNav({ title }: { title?: string }) {
       </div>
 
       <div className="flex items-center gap-3">
+        <TxTray />
         <a
           href={studioContractLink(GENLAYER_CONTRACT_ADDRESS)}
           target="_blank"

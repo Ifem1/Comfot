@@ -7,7 +7,7 @@ import { useHotel } from "@/hooks/useHotel"
 import { CheckCircle, XCircle, AlertCircle, Clock, Sparkles, ChevronDown, ChevronRight, ExternalLink } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { studioTxLink } from "@/lib/genlayer/config"
-import type { Recommendation, Validation } from "@/types/contract"
+import type { Recommendation } from "@/types/contract"
 
 function VerdictBadge({ status }: { status: string }) {
   const map: Record<string, { cls: string; icon: React.ReactNode; label: string }> = {
@@ -183,16 +183,13 @@ export default function RecommendationsPage() {
   const [checkOut, setCheckOut] = useState("")
   const [context, setContext] = useState("")
   const [requesting, setRequesting] = useState(false)
-  const [txHash, setTxHash] = useState<string | null>(null)
 
   const handleRequest = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!selectedGuestId) return
     setRequesting(true)
     try {
-      const hash = await requestRecommendation(selectedGuestId, roomType, checkIn, checkOut, context)
-      setTxHash(hash)
-      setTimeout(() => refetch(), 5000)
+      await requestRecommendation(selectedGuestId, roomType, checkIn, checkOut, context)
     } finally {
       setRequesting(false)
     }
@@ -273,14 +270,6 @@ export default function RecommendationsPage() {
           {requesting ? "Requesting validator consensus…" : "Request Recommendation"}
         </button>
       </form>
-
-      {txHash && (
-        <div className="glass-card rounded-xl p-5 border border-success/20">
-          <p className="text-success text-sm mb-1">Recommendation request submitted</p>
-          <a href={studioTxLink(txHash)} target="_blank" rel="noopener noreferrer" className="mono-text text-xs text-gold-dim hover:text-gold break-all">{txHash}</a>
-          <p className="text-ivory-dim text-xs mt-2">Validators are running consensus. The dossier will appear below once processed.</p>
-        </div>
-      )}
 
       {/* Dossier list */}
       <div className="space-y-4">

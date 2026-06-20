@@ -1,12 +1,12 @@
 "use client"
 
-import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useQuery } from "@tanstack/react-query"
 import { useAccount } from "wagmi"
 import {
   getHotel, getPreferenceRules, getHotelStats, writeContract,
 } from "@/lib/genlayer/comfotClient"
 import type { Hotel, HotelStats, PreferenceRule } from "@/types/contract"
-import { toast } from "sonner"
+import { useTxTracker } from "@/hooks/useTxPoller"
 
 export function useHotel() {
   const { address } = useAccount()
@@ -42,58 +42,37 @@ export function usePreferenceRules() {
 }
 
 export function useRegisterHotel() {
-  const qc = useQueryClient()
   const { address } = useAccount()
+  const { track } = useTxTracker()
 
   return async (name: string, category: string, amenities: string[], rooms: string[]) => {
-    const toastId = toast.loading("Sending hotel registration…")
-    try {
-      const hash = await writeContract("register_hotel", [name, category, amenities, rooms])
-      toast.success("Registration submitted", { id: toastId, description: `tx: ${hash.slice(0, 18)}…` })
-      setTimeout(() => {
-        qc.invalidateQueries({ queryKey: ["hotel", address] })
-        qc.invalidateQueries({ queryKey: ["hotel-stats", address] })
-      }, 4000)
-      return hash
-    } catch (e: unknown) {
-      toast.error("Registration failed", { id: toastId, description: e instanceof Error ? e.message : String(e) })
-      throw e
-    }
+    const hash = await writeContract("register_hotel", [name, category, amenities, rooms])
+    track(hash, "Register hotel", [
+      ["hotel", address ?? ""],
+      ["hotel-stats", address ?? ""],
+    ])
+    return hash
   }
 }
 
 export function useSetPreferenceRule() {
-  const qc = useQueryClient()
   const { address } = useAccount()
+  const { track } = useTxTracker()
 
   return async (ruleType: string, ruleValue: string, priority: number) => {
-    const toastId = toast.loading("Setting preference rule…")
-    try {
-      const hash = await writeContract("set_preference_rule", [ruleType, ruleValue, priority])
-      toast.success("Rule saved", { id: toastId })
-      setTimeout(() => qc.invalidateQueries({ queryKey: ["preference-rules", address] }), 3000)
-      return hash
-    } catch (e: unknown) {
-      toast.error("Failed", { id: toastId, description: e instanceof Error ? e.message : String(e) })
-      throw e
-    }
+    const hash = await writeContract("set_preference_rule", [ruleType, ruleValue, priority])
+    track(hash, "Set preference rule", [["preference-rules", address ?? ""]])
+    return hash
   }
 }
 
 export function useDeletePreferenceRule() {
-  const qc = useQueryClient()
   const { address } = useAccount()
+  const { track } = useTxTracker()
 
   return async (ruleId: string) => {
-    const toastId = toast.loading("Deleting rule…")
-    try {
-      const hash = await writeContract("delete_preference_rule", [ruleId])
-      toast.success("Rule deleted", { id: toastId })
-      setTimeout(() => qc.invalidateQueries({ queryKey: ["preference-rules", address] }), 3000)
-      return hash
-    } catch (e: unknown) {
-      toast.error("Failed", { id: toastId, description: e instanceof Error ? e.message : String(e) })
-      throw e
-    }
+    const hash = await writeContract("delete_preference_rule", [ruleId])
+    track(hash, "Delete preference rule", [["preference-rules", address ?? ""]])
+    return hash
   }
 }

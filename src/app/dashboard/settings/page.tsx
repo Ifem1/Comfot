@@ -2,11 +2,10 @@
 
 import { useState } from "react"
 import { useHotel, useRegisterHotel } from "@/hooks/useHotel"
-import { useQueryClient } from "@tanstack/react-query"
 import { useAccount } from "wagmi"
+// useQueryClient removed — invalidation handled by useTxTracker
 import { Plus, X, CheckCircle } from "lucide-react"
-import { DEMO_HOTEL } from "@/lib/genlayer/config"
-import { studioTxLink } from "@/lib/genlayer/config"
+import { DEMO_HOTEL, studioTxLink } from "@/lib/genlayer/config"
 
 function TagInput({ label, value, onChange }: { label: string; value: string[]; onChange: (v: string[]) => void }) {
   const [input, setInput] = useState("")
@@ -48,14 +47,12 @@ export default function SettingsPage() {
   const { address } = useAccount()
   const { data: hotel, isLoading } = useHotel()
   const registerHotel = useRegisterHotel()
-  const qc = useQueryClient()
 
   const [name, setName] = useState("")
   const [category, setCategory] = useState("luxury")
   const [amenities, setAmenities] = useState<string[]>([])
   const [rooms, setRooms] = useState<string[]>([])
   const [submitting, setSubmitting] = useState(false)
-  const [txHash, setTxHash] = useState<string | null>(null)
 
   const loadDemo = () => {
     setName(DEMO_HOTEL.name)
@@ -69,12 +66,7 @@ export default function SettingsPage() {
     if (!name.trim() || rooms.length === 0) return
     setSubmitting(true)
     try {
-      const hash = await registerHotel(name.trim(), category, amenities, rooms)
-      setTxHash(hash)
-      setTimeout(() => {
-        qc.invalidateQueries({ queryKey: ["hotel", address] })
-        qc.invalidateQueries({ queryKey: ["hotel-stats", address] })
-      }, 4000)
+      await registerHotel(name.trim(), category, amenities, rooms)
     } finally {
       setSubmitting(false)
     }
@@ -101,23 +93,6 @@ export default function SettingsPage() {
           </div>
         )}
       </div>
-
-      {txHash && (
-        <div className="glass-card rounded-xl p-5 border border-success/20">
-          <p className="text-success text-sm font-medium mb-1">Transaction submitted</p>
-          <a
-            href={studioTxLink(txHash)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mono-text text-xs text-gold-dim hover:text-gold break-all"
-          >
-            {txHash}
-          </a>
-          <p className="text-ivory-dim text-xs mt-2">
-            Validators are processing. Hotel profile will appear within a few seconds after consensus.
-          </p>
-        </div>
-      )}
 
       <form onSubmit={handleSubmit} className="glass-card rounded-xl p-8 space-y-6">
         <div className="flex items-center justify-between mb-2">
