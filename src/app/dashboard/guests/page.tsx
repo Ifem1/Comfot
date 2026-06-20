@@ -1,11 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useGuests, useSubmitGuestProfile, useEraseGuestProfile } from "@/hooks/useGuests"
 import { useHotel } from "@/hooks/useHotel"
-import { Plus, X, Trash2, ChevronDown, ChevronRight } from "lucide-react"
+import { useGuestPII } from "@/hooks/useGuestPII"
+import { useAccount } from "wagmi"
+import { Plus, X, Trash2, ChevronDown, ChevronRight, ShieldCheck } from "lucide-react"
 import { DEMO_GUEST } from "@/lib/genlayer/config"
 import type { Guest } from "@/types/contract"
+import type { GuestPII } from "@/lib/supabase/types"
 import { cn } from "@/lib/utils"
 
 function ArrayInput({ label, value, onChange, placeholder }: { label: string; value: string[]; onChange: (v: string[]) => void; placeholder?: string }) {
@@ -44,9 +47,40 @@ function ArrayInput({ label, value, onChange, placeholder }: { label: string; va
   )
 }
 
-function GuestCard({ guest }: { guest: Guest }) {
+function GuestCard({ guest, hotelAddress }: { guest: Guest; hotelAddress: string }) {
   const [expanded, setExpanded] = useState(false)
+  const [pii, setPii] = useState<GuestPII | null>(null)
+  const [editingPII, setEditingPII] = useState(false)
+  const [piiForm, setPiiForm] = useState({ full_name: "", email: "", phone: "", nationality: "", passport_number: "", date_of_birth: "", notes: "" })
+  const [piiSaving, setPiiSaving] = useState(false)
   const eraseGuest = useEraseGuestProfile()
+  const { fetchPII, savePII, deletePII } = useGuestPII()
+
+  useEffect(() => {
+    if (expanded && !pii) {
+      fetchPII(guest.guest_id, hotelAddress).then((data) => {
+        if (data) {
+          setPii(data)
+          setPiiForm({ full_name: data.full_name ?? "", email: data.email ?? "", phone: data.phone ?? "", nationality: data.nationality ?? "", passport_number: data.passport_number ?? "", date_of_birth: data.date_of_birth ?? "", notes: data.notes ?? "" })
+        }
+      })
+    }
+  }, [expanded, guest.guest_id, hotelAddress, fetchPII, pii])
+
+  const handleSavePII = async () => {
+    setPiiSaving(true)
+    const result = await savePII({ guest_id: guest.guest_id, hotel_address: hotelAddress, guest_ref: guest.guest_ref, ...piiForm })
+    if (result) { setPii(result); setEditingPII(false) }
+    setPiiSaving(false)
+  }
+
+  const handleDeletePII = async () => {
+    if (!confirm("Delete all off-chain PII for this guest?")) return
+    await deletePII(guest.guest_id, hotelAddress)
+    setPii(null)
+    setPiiForm({ full_name: "", email: "", phone: "", nationality: "", passport_number: "", date_of_birth: "", notes: "" })
+    setEditingPII(false)
+  }
 
   return (
     <div className="glass-card rounded-xl overflow-hidden">
@@ -93,6 +127,74 @@ function GuestCard({ guest }: { guest: Guest }) {
               </ul>
             </div>
           )}
+
+          {/* Off-chain PII section */}
+          <div className="border-t border-border pt-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-gold" />
+                <p className="mono-text text-gold text-xs">Secure Off-chain PII</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingPII((v) => !v)}
+                className="text-xs text-ivory-dim hover:text-gold transition-colors"
+              >
+                {editingPII ? "Cancel" : pii ? "Edit" : "+ Add PII"}
+              </button>
+            </div>
+
+            {!editingPII && pii && (
+              <div className="grid grid-cols-2 gap-x-6 gap-y-1">
+                {pii.full_name && <p className="text-ivory-dim text-xs"><span className="text-ivory-faint">Name:</span> {pii.full_name}</p>}
+                {pii.email && <p className="text-ivory-dim text-xs"><span className="text-ivory-faint">Email:</span> {pii.email}</p>}
+                {pii.phone && <p className="text-ivory-dim text-xs"><span className="text-ivory-faint">Phone:</span> {pii.phone}</p>}
+                {pii.nationality && <p className="text-ivory-dim text-xs"><span className="text-ivory-faint">Nationality:</span> {pii.nationality}</p>}
+                {pii.passport_number && <p className="text-ivory-dim text-xs"><span className="text-ivory-faint">Passport:</span> {pii.passport_number}</p>}
+                {pii.date_of_birth && <p className="text-ivory-dim text-xs"><span className="text-ivory-faint">DOB:</span> {pii.date_of_birth}</p>}
+                {pii.notes && <p className="text-ivory-dim text-xs col-span-2"><span className="text-ivory-faint">Notes:</span> {pii.notes}</p>}
+              </div>
+            )}
+
+            {editingPII && (
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  {(["full_name", "email", "phone", "nationality", "passport_number", "date_of_birth"] as const).map((field) => (
+                    <div key={field}>
+                      <label className="label-dark capitalize">{field.replace("_", " ")}</label>
+                      <input
+                        className="input-dark"
+                        type={field === "email" ? "email" : field === "date_of_birth" ? "date" : "text"}
+                        value={piiForm[field]}
+                        onChange={(e) => setPiiForm((f) => ({ ...f, [field]: e.target.value }))}
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div>
+                  <label className="label-dark">Notes</label>
+                  <textarea
+                    className="input-dark resize-none"
+                    rows={2}
+                    value={piiForm.notes}
+                    onChange={(e) => setPiiForm((f) => ({ ...f, notes: e.target.value }))}
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <button type="button" onClick={handleSavePII} disabled={piiSaving} className="btn-ghost text-xs flex-1 disabled:opacity-50">
+                    {piiSaving ? "Saving…" : "Save PII"}
+                  </button>
+                  {pii && (
+                    <button type="button" onClick={handleDeletePII} className="text-xs text-danger hover:text-danger/80 px-3">
+                      Delete
+                    </button>
+                  )}
+                </div>
+                <p className="text-ivory-faint text-xs">PII is stored in Supabase — never written to the blockchain.</p>
+              </div>
+            )}
+          </div>
+
           <button
             onClick={() => eraseGuest(guest.guest_id)}
             className="flex items-center gap-2 text-xs text-danger hover:text-danger/80 mt-2"
@@ -106,6 +208,7 @@ function GuestCard({ guest }: { guest: Guest }) {
 }
 
 export default function GuestsPage() {
+  const { address } = useAccount()
   const { data: hotel } = useHotel()
   const { data: guests = [], isLoading } = useGuests()
   const submitGuest = useSubmitGuestProfile()
@@ -219,7 +322,7 @@ export default function GuestsPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {guests.map((guest) => <GuestCard key={guest.guest_id} guest={guest} />)}
+          {guests.map((guest) => <GuestCard key={guest.guest_id} guest={guest} hotelAddress={address ?? ""} />)}
         </div>
       )}
     </div>
