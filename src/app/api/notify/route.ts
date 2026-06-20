@@ -78,21 +78,47 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: insertErr.message }, { status: 500 })
   }
 
-  // 4. TODO: Send email via Resend/SendGrid when ready
-  // if (shouldSend && contact?.contact_email) {
-  //   await resend.emails.send({
-  //     from: "Comfot <no-reply@comfot.app>",
-  //     to: contact.contact_email,
-  //     subject: notif.subject,
-  //     text: notif.body,
-  //   })
-  //   await db.from("notifications").update({ delivered: true }).eq("id", notif.id)
-  // }
+  // 4. Send email via Brevo
+  if (shouldSend && contact?.contact_email) {
+    const brevoKey = process.env.BREVO_API_KEY
+    const fromEmail = process.env.BREVO_FROM_EMAIL ?? "onwukweify19@gmail.com"
+    const fromName = process.env.BREVO_FROM_NAME ?? "Comfot"
+
+    if (brevoKey) {
+      try {
+        const emailRes = await fetch("https://api.brevo.com/v3/smtp/email", {
+          method: "POST",
+          headers: {
+            "accept": "application/json",
+            "api-key": brevoKey,
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            sender: { name: fromName, email: fromEmail },
+            to: [{ email: contact.contact_email }],
+            subject: notif.subject,
+            textContent: notif.body,
+            htmlContent: `<pre style="font-family:sans-serif;white-space:pre-wrap">${notif.body}</pre>`,
+          }),
+        })
+
+        if (emailRes.ok) {
+          await db.from("notifications").update({ delivered: true }).eq("id", notif.id)
+        } else {
+          const errText = await emailRes.text()
+          await db.from("notifications").update({ error: errText }).eq("id", notif.id)
+        }
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : "email send failed"
+        await db.from("notifications").update({ error: msg }).eq("id", notif.id)
+      }
+    }
+  }
 
   return NextResponse.json({
     logged: true,
     notification_id: notif.id,
-    would_send: shouldSend && !!contact?.contact_email,
+    sent: shouldSend && !!contact?.contact_email,
     email: contact?.contact_email ?? null,
   })
 }
