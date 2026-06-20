@@ -34,16 +34,22 @@ function getReadClient() {
   return _readClient
 }
 
-/** Returns a write-capable client using window.ethereum as the provider. */
-function getWriteClient() {
+/** Returns a write-capable client using window.ethereum as the provider + connected account. */
+async function getWriteClient() {
   if (typeof window === "undefined" || !window.ethereum) {
     throw new Error("No injected wallet found. Please install MetaMask.")
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const provider = window.ethereum as any
+  const accounts: string[] = await provider.request({ method: "eth_accounts" })
+  if (!accounts || accounts.length === 0) {
+    throw new Error("No wallet account connected. Please connect MetaMask first.")
+  }
   return createClient({
     chain: STUDIO_NET,
     endpoint: STUDIO_NET.rpcUrls.default.http[0],
-    provider: window.ethereum as any,
+    account: accounts[0] as `0x${string}`,
+    provider,
   })
 }
 
@@ -79,7 +85,7 @@ export async function writeContract(
   functionName: string,
   args: CalldataEncodable[] = []
 ): Promise<string> {
-  const client = getWriteClient()
+  const client = await getWriteClient()
   const hash = await client.writeContract({
     address: GENLAYER_CONTRACT_ADDRESS,
     functionName,
