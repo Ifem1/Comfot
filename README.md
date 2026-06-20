@@ -3,7 +3,7 @@
 > A GenLayer-native intelligent contract that turns guest signals into validated, consensus-backed room and service recommendations.
 
 **Live Demo:** [comfot.vercel.app](https://comfot.vercel.app)  
-**Contract:** [`0x32dDA1D6f10D1F91Ba057c734986c3b58F7dB043`](https://studio.genlayer.com/contracts/0x32dDA1D6f10D1F91Ba057c734986c3b58F7dB043) on StudioNet  
+**Contract:** [`0x700dfAD70aa52455B66C4Cd0bd1772fBbE1379e4`](https://studio.genlayer.com/contracts/0x700dfAD70aa52455B66C4Cd0bd1772fBbE1379e4) on StudioNet  
 **Network:** GenLayer StudioNet (chainId 61999)
 
 ---

@@ -13,7 +13,7 @@ import { createClient, abi as glAbi, chains } from "genlayer-js"
 
 // ─── Config ───────────────────────────────────────────────────
 const RPC      = "https://studio.genlayer.com/api"
-const CONTRACT = "0x32dDA1D6f10D1F91Ba057c734986c3b58F7dB043"
+const CONTRACT = "0x700dfAD70aa52455B66C4Cd0bd1772fBbE1379e4"
 const CHAIN    = chains.studionet
 const POLL_MS  = 5000
 const TIMEOUT  = 600_000   // 10 min per tx
