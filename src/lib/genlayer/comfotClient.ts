@@ -8,9 +8,13 @@
  * Network : StudioNet (chainId 61999)
  */
 
-import { createClient, abi as glAbi } from "genlayer-js"
+import { createClient, abi as glAbi, chains } from "genlayer-js"
 import type { CalldataEncodable } from "genlayer-js/types"
 import { GENLAYER_CONTRACT_ADDRESS, STUDIO_NET } from "./config"
+
+// Use the SDK's built-in studionet chain (has isStudio:true + consensusMainContract ABI
+// needed for getTransaction status polling to work correctly)
+const CHAIN = chains.studionet ?? STUDIO_NET
 import type {
   Hotel, Guest, Recommendation, Validation,
   Escalation, PreferenceRule, HotelStats, GlobalStats,
@@ -27,8 +31,8 @@ let _readClient: ReturnType<typeof createClient> | null = null
 function getReadClient() {
   if (!_readClient) {
     _readClient = createClient({
-      chain: STUDIO_NET,
-      endpoint: STUDIO_NET.rpcUrls.default.http[0],
+      chain: CHAIN,
+      endpoint: CHAIN.rpcUrls.default.http[0],
     })
   }
   return _readClient

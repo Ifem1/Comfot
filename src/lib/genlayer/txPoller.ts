@@ -11,8 +11,10 @@
  *   (or CANCELED / UNDETERMINED on failure)
  */
 
-import { createClient } from "genlayer-js"
+import { createClient, chains } from "genlayer-js"
 import { STUDIO_NET } from "./config"
+
+const CHAIN = chains.studionet ?? STUDIO_NET
 import type { TransactionStatus } from "genlayer-js/types"
 
 export type TxStatus =
@@ -85,8 +87,8 @@ let _client: ReturnType<typeof createClient> | null = null
 function getClient() {
   if (!_client) {
     _client = createClient({
-      chain: STUDIO_NET,
-      endpoint: STUDIO_NET.rpcUrls.default.http[0],
+      chain: CHAIN,
+      endpoint: CHAIN.rpcUrls.default.http[0],
     })
   }
   return _client
