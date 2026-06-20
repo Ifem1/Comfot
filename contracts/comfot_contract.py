@@ -643,9 +643,9 @@ Rules:
 
         result = gl.eq_principle.prompt_comparative(
             run_prompt,
-            "The JSON must describe the same underlying guest comfort needs. "
-            "Minor wording differences are acceptable, but validators must agree "
-            "on the main room, amenity, service, dietary and communication preferences."
+            "The JSON must reflect the same overall guest comfort direction. "
+            "Tag wording may differ as long as the tags point to the same underlying "
+            "needs. Minor differences in phrasing are acceptable."
         )
 
         parsed = self._safe_parse(result)
@@ -740,9 +740,9 @@ Rules:
 
         result = gl.eq_principle.prompt_comparative(
             run_prompt,
-            "Validators must agree on the same primary room type and the same "
-            "core service recommendation. Amenity and package wording may differ "
-            "only if they are semantically equivalent and available in the hotel inventory."
+            "Validators must agree on the same general tier or category of room. "
+            "Amenity and package selections may vary as long as they serve the same "
+            "guest needs. Wording differences in justification and guest message are acceptable."
         )
 
         parsed = self._safe_parse(result)
@@ -864,9 +864,9 @@ approve, reject, escalate.
 
         result = gl.eq_principle.prompt_comparative(
             run_prompt,
-            "Validators must agree on the decision field. Scores may vary slightly, "
-            "but they must describe the same primary evidence, the same main risk, "
-            "and the same semantic alignment judgement."
+            "Validators must agree on the decision field (approve, reject, or escalate). "
+            "Score differences up to 15 points are acceptable. Reasoning and flag wording "
+            "may differ as long as the overall verdict is the same."
         )
 
         parsed = self._safe_parse(result)
