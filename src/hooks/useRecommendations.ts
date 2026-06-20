@@ -62,6 +62,18 @@ export function useValidationForRecommendation(recId: string | null) {
   })
 }
 
+async function logNotify(payload: Record<string, unknown>) {
+  try {
+    await fetch("/api/notify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    })
+  } catch {
+    // best-effort — don't block the UI
+  }
+}
+
 export function useRequestRecommendation() {
   const { address } = useAccount()
   const { track } = useTxTracker()
@@ -76,11 +88,51 @@ export function useRequestRecommendation() {
     const hash = await writeContract("request_recommendation", [
       guestId, roomType, checkIn, checkOut, specialContext,
     ])
-    track(hash, "Request recommendation", [
-      ["hotel-recs", address ?? ""],
-      ["guest-recs", guestId],
-      ["hotel-stats", address ?? ""],
-    ])
+    track(hash, "Request recommendation", {
+      invalidateKeys: [
+        ["hotel-recs", address ?? ""],
+        ["guest-recs", guestId],
+        ["hotel-stats", address ?? ""],
+      ],
+      onFinalized: async (status) => {
+        if (status !== "finalized") return
+        // fetch the rec outcome and log it
+        const { getGuestRecommendations } = await import("@/lib/genlayer/comfotClient")
+        const recs = await getGuestRecommendations(guestId)
+        // find the most recent rec for this guest (just finalized)
+        const latest = recs.sort((a, b) =>
+          (b.created_at ?? "").localeCompare(a.created_at ?? "")
+        )[0]
+        if (!latest) return
+        if (latest.status === "escalated") {
+          await logNotify({
+            hotel_address: address,
+            type: "escalation",
+            rec_id: latest.rec_id,
+            tx_hash: hash,
+            alignment_score: latest.alignment_score,
+            suggested_room: latest.suggested_room,
+          })
+        } else if (latest.status === "rejected") {
+          await logNotify({
+            hotel_address: address,
+            type: "rejected",
+            rec_id: latest.rec_id,
+            tx_hash: hash,
+            alignment_score: latest.alignment_score,
+          })
+        } else if (latest.status === "approved") {
+          await logNotify({
+            hotel_address: address,
+            type: "finalized",
+            rec_id: latest.rec_id,
+            tx_hash: hash,
+            alignment_score: latest.alignment_score,
+            suggested_room: latest.suggested_room,
+          })
+        }
+      },
+    })
     return hash
   }
 }

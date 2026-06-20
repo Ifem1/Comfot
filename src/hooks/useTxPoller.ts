@@ -20,9 +20,15 @@ const STATUS_LABELS: Record<TxStatus, string> = {
   error:        "Error",
 }
 
+export interface TxTrackOptions {
+  invalidateKeys?: string[][]
+  /** Called after tx finalizes — use to fire /api/notify or other side-effects */
+  onFinalized?: (status: TxStatus) => void
+}
+
 /**
  * Call this once per write action to submit a tx to the polling system.
- * Returns a `track(hash, label, invalidateKeys)` function.
+ * Returns a `track(hash, label, options)` function.
  */
 export function useTxTracker() {
   const { addTx, updateStatus, finalizeTx } = useTxStore()
@@ -31,14 +37,18 @@ export function useTxTracker() {
   const track = useCallback((
     hash: string,
     label: string,
-    invalidateKeys: string[][] = [],
+    invalidateKeys: string[][] | TxTrackOptions = [],
   ) => {
+    // support both old array form and new options object form
+    const opts: TxTrackOptions = Array.isArray(invalidateKeys)
+      ? { invalidateKeys }
+      : invalidateKeys
     const tx: PendingTx = {
       hash,
       label,
       status: "pending",
       startedAt: Date.now(),
-      invalidateKeys,
+      invalidateKeys: opts.invalidateKeys ?? [],
     }
     addTx(tx)
 
@@ -63,8 +73,7 @@ export function useTxTracker() {
             duration: 6000,
             description: `Finalized · ${studioTxLink(hash)}`,
           })
-          // invalidate query keys so the UI refreshes with on-chain state
-          for (const key of invalidateKeys) {
+          for (const key of opts.invalidateKeys ?? []) {
             qc.invalidateQueries({ queryKey: key })
           }
         } else {
@@ -73,6 +82,7 @@ export function useTxTracker() {
             duration: 8000,
           })
         }
+        opts.onFinalized?.(status)
       },
       onError: (err) => {
         updateStatus(hash, "error", err)

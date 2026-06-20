@@ -47,7 +47,7 @@ function ArrayInput({ label, value, onChange, placeholder }: { label: string; va
   )
 }
 
-function GuestCard({ guest, hotelAddress }: { guest: Guest; hotelAddress: string }) {
+function GuestCard({ guest, hotelAddress, onEdit }: { guest: Guest; hotelAddress: string; onEdit: (g: Guest) => void }) {
   const [expanded, setExpanded] = useState(false)
   const [pii, setPii] = useState<GuestPII | null>(null)
   const [editingPII, setEditingPII] = useState(false)
@@ -97,6 +97,13 @@ function GuestCard({ guest, hotelAddress }: { guest: Guest; hotelAddress: string
         </div>
         <div className="flex items-center gap-3 shrink-0">
           <span className="text-ivory-dim text-xs">{guest.stay_count ?? 0} stays</span>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onEdit(guest) }}
+            className="text-xs text-ivory-faint hover:text-gold transition-colors px-2 py-0.5 rounded border border-border hover:border-gold/40"
+          >
+            Edit
+          </button>
           {expanded ? <ChevronDown className="w-4 h-4 text-ivory-faint" /> : <ChevronRight className="w-4 h-4 text-ivory-faint" />}
         </div>
       </button>
@@ -214,6 +221,7 @@ export default function GuestsPage() {
   const submitGuest = useSubmitGuestProfile()
 
   const [showForm, setShowForm] = useState(false)
+  const [editingGuest, setEditingGuest] = useState<Guest | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
   const [guestRef, setGuestRef] = useState("")
@@ -225,6 +233,26 @@ export default function GuestsPage() {
   const [convos, setConvos] = useState<string[]>([])
   const [roomHistory, setRoomHistory] = useState<string[]>([])
 
+  const resetForm = () => {
+    setGuestRef(""); setName(""); setLoyaltyTier("gold")
+    setReviews([]); setRequests([]); setDietary([]); setConvos([]); setRoomHistory([])
+    setEditingGuest(null)
+  }
+
+  const loadGuest = (g: Guest) => {
+    setGuestRef(g.guest_ref)
+    setName(g.name)
+    setLoyaltyTier(g.loyalty_tier)
+    setReviews([...g.review_history])
+    setRequests([...g.special_requests])
+    setDietary([...g.dietary_needs])
+    setConvos([...g.conversation_history])
+    setRoomHistory([...g.room_history])
+    setEditingGuest(g)
+    setShowForm(true)
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }
+
   const loadDemo = () => {
     setGuestRef(DEMO_GUEST.guest_ref)
     setName(DEMO_GUEST.name)
@@ -234,6 +262,7 @@ export default function GuestsPage() {
     setDietary([...DEMO_GUEST.dietary_needs])
     setConvos([...DEMO_GUEST.conversation_history])
     setRoomHistory([...DEMO_GUEST.room_history])
+    setEditingGuest(null)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -242,6 +271,7 @@ export default function GuestsPage() {
     try {
       await submitGuest(guestRef, name, loyaltyTier, reviews, requests, dietary, convos, roomHistory)
       setShowForm(false)
+      resetForm()
     } finally {
       setSubmitting(false)
     }
@@ -263,7 +293,7 @@ export default function GuestsPage() {
           <p className="mono-text text-gold mb-1">Guest Management</p>
           <h1 className="display-text text-4xl font-light text-ivory">Guest Dossiers</h1>
         </div>
-        <button onClick={() => setShowForm((v) => !v)} className="btn-gold flex items-center gap-2">
+        <button onClick={() => { resetForm(); setShowForm((v) => !v) }} className="btn-gold flex items-center gap-2">
           <Plus className="w-4 h-4" /> New Guest
         </button>
       </div>
@@ -271,10 +301,12 @@ export default function GuestsPage() {
       {showForm && (
         <form onSubmit={handleSubmit} className="glass-card rounded-xl p-8 space-y-5 animate-fade-in">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-ivory font-medium text-sm">Submit Guest Profile</p>
+            <p className="text-ivory font-medium text-sm">
+              {editingGuest ? `Editing: ${editingGuest.name}` : "Submit Guest Profile"}
+            </p>
             <div className="flex gap-2">
-              <button type="button" onClick={loadDemo} className="btn-ghost text-xs text-gold">Demo Data</button>
-              <button type="button" onClick={() => setShowForm(false)}><X className="w-4 h-4 text-ivory-dim" /></button>
+              {!editingGuest && <button type="button" onClick={loadDemo} className="btn-ghost text-xs text-gold">Demo Data</button>}
+              <button type="button" onClick={() => { setShowForm(false); resetForm() }}><X className="w-4 h-4 text-ivory-dim" /></button>
             </div>
           </div>
 
@@ -305,7 +337,7 @@ export default function GuestsPage() {
           <ArrayInput label="Room History" value={roomHistory} onChange={setRoomHistory} placeholder="e.g. Deluxe Suite, floor 12, 2024-03" />
 
           <button type="submit" disabled={submitting} className="btn-gold w-full disabled:opacity-50">
-            {submitting ? "Submitting…" : "Submit Guest Profile"}
+            {submitting ? "Submitting…" : editingGuest ? "Update Guest Profile" : "Submit Guest Profile"}
           </button>
         </form>
       )}
@@ -322,7 +354,7 @@ export default function GuestsPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {guests.map((guest) => <GuestCard key={guest.guest_id} guest={guest} hotelAddress={address ?? ""} />)}
+          {guests.map((guest) => <GuestCard key={guest.guest_id} guest={guest} hotelAddress={address ?? ""} onEdit={loadGuest} />)}
         </div>
       )}
     </div>

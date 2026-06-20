@@ -2,12 +2,18 @@
 
 import { useState } from "react"
 import { useGuests } from "@/hooks/useGuests"
-import { useHotelRecommendations, useRequestRecommendation, useValidationForRecommendation } from "@/hooks/useRecommendations"
+import {
+  useHotelRecommendations,
+  useRequestRecommendation,
+  useValidationForRecommendation,
+  usePendingEscalations,
+  useResolveEscalation,
+} from "@/hooks/useRecommendations"
 import { useHotel } from "@/hooks/useHotel"
-import { CheckCircle, XCircle, AlertCircle, Clock, Sparkles, ChevronDown, ChevronRight, ExternalLink } from "lucide-react"
+import { CheckCircle, XCircle, AlertCircle, Clock, Sparkles, ChevronDown, ChevronRight, ShieldAlert, ThumbsUp, ThumbsDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { studioTxLink } from "@/lib/genlayer/config"
-import type { Recommendation } from "@/types/contract"
+import type { Recommendation, Escalation } from "@/types/contract"
 
 function VerdictBadge({ status }: { status: string }) {
   const map: Record<string, { cls: string; icon: React.ReactNode; label: string }> = {
@@ -171,10 +177,84 @@ function RecDossier({ rec }: { rec: Recommendation }) {
   )
 }
 
+function EscalationCard({ esc, guests }: { esc: Escalation; guests: { guest_id: string; name: string }[] }) {
+  const [note, setNote] = useState("")
+  const [resolving, setResolving] = useState(false)
+  const resolveEscalation = useResolveEscalation()
+  const guest = guests.find((g) => g.guest_id === esc.guest_id)
+
+  const resolve = async (decision: "approved" | "rejected") => {
+    setResolving(true)
+    try {
+      await resolveEscalation(esc.escalation_id, decision, note)
+    } finally {
+      setResolving(false)
+    }
+  }
+
+  return (
+    <div className="glass-card rounded-xl p-6 border-l-2 border-warning/50 space-y-4">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <ShieldAlert className="w-4 h-4 text-warning" />
+            <span className="text-warning text-sm font-medium mono-text">ESCALATED — Human Review Required</span>
+          </div>
+          <p className="text-ivory-dim text-xs mono-text">
+            {guest ? guest.name : esc.guest_id} · Rec {esc.rec_id}
+          </p>
+          {esc.alignment_score != null && (
+            <p className="text-ivory-faint text-xs mt-0.5">Alignment score: {esc.alignment_score}</p>
+          )}
+        </div>
+        <span className="mono-text text-xs text-ivory-faint shrink-0">{esc.escalation_id}</span>
+      </div>
+
+      {(esc.escalation_reason ?? esc.reason) && (
+        <div className="bg-warning/5 border border-warning/20 rounded-lg px-4 py-3">
+          <p className="text-warning text-xs mono-text mb-1">Escalation Reason</p>
+          <p className="text-ivory-dim text-sm leading-relaxed">{esc.escalation_reason ?? esc.reason}</p>
+        </div>
+      )}
+
+      <div>
+        <label className="label-dark">Resolution Note (optional)</label>
+        <textarea
+          className="input-dark resize-none h-16"
+          placeholder="Add context for why you approved or rejected this recommendation…"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          disabled={resolving}
+        />
+      </div>
+
+      <div className="flex gap-3">
+        <button
+          onClick={() => resolve("approved")}
+          disabled={resolving}
+          className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-success/10 border border-success/30 text-success text-sm hover:bg-success/20 transition-colors disabled:opacity-50"
+        >
+          <ThumbsUp className="w-4 h-4" />
+          {resolving ? "Submitting…" : "Approve"}
+        </button>
+        <button
+          onClick={() => resolve("rejected")}
+          disabled={resolving}
+          className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-danger/10 border border-danger/30 text-danger text-sm hover:bg-danger/20 transition-colors disabled:opacity-50"
+        >
+          <ThumbsDown className="w-4 h-4" />
+          {resolving ? "Submitting…" : "Reject"}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function RecommendationsPage() {
   const { data: hotel } = useHotel()
   const { data: guests = [], isLoading: guestsLoading } = useGuests()
   const { data: allRecs = [], isLoading: recsLoading, refetch } = useHotelRecommendations()
+  const { data: escalations = [] } = usePendingEscalations()
   const requestRecommendation = useRequestRecommendation()
 
   const [selectedGuestId, setSelectedGuestId] = useState("")
@@ -270,6 +350,19 @@ export default function RecommendationsPage() {
           {requesting ? "Requesting validator consensus…" : "Request Recommendation"}
         </button>
       </form>
+
+      {/* Pending escalations */}
+      {escalations.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <ShieldAlert className="w-4 h-4 text-warning" />
+            <p className="mono-text text-warning">{escalations.length} Pending Escalation{escalations.length !== 1 ? "s" : ""}</p>
+          </div>
+          {escalations.map((esc) => (
+            <EscalationCard key={esc.escalation_id} esc={esc} guests={guests} />
+          ))}
+        </div>
+      )}
 
       {/* Dossier list */}
       <div className="space-y-4">
