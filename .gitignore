@@ -16,5 +16,7 @@ Thumbs.db
 npm-debug.log*
 __pycache__/
 *.pyc
+.pytest_cache/
+artifacts/
 
 .vercel
