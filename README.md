@@ -14,7 +14,7 @@ Hotels collect signals about their guests — reviews, special requests, dietary
 
 Comfot puts that judgment on-chain. A hotel registers on the contract, submits anonymised guest profiles, and triggers a recommendation request. GenLayer validators independently run three AI prompts and reach consensus on the output. The result — a specific room, amenities, packages, upsell opportunities, and a pre-arrival guest message — is stored on-chain and is auditable.
 
-No raw personal data is ever written to the blockchain. Guest PII (name, email, passport) is stored separately in Supabase, accessible only to the hotel that owns it.
+Comfot is now frontend plus contract only. No raw personal identity fields such as names, emails, phone numbers, or passport numbers are stored by the app or written to chain; use `guest_ref` as the hotel-internal pseudonymous identifier.
 
 ---
 
@@ -91,18 +91,18 @@ Each stage runs across all validators independently. Consensus is required at ev
 
 ## Data Architecture
 
-```
-On-chain (GenLayer)                Off-chain (Supabase — server only)
-─────────────────────────────      ──────────────────────────────────
-Hotel profile                      guest_pii      (name, email, passport,
-Guest profile (anonymised)           phone, nationality — per hotel)
-Preference rules                   hotel_contacts (notification prefs,
-Recommendations                      contact email)
-Validator decisions                notifications  (email log, delivery status)
-Escalation records
+```text
+Frontend (Next.js + wallet)
+        |
+        v
+GenLayer StudioNet Intelligent Contract
+        |
+        v
+Hotel profiles, anonymised guest profiles, preference rules,
+recommendations, validations, escalations, and audit pointers
 ```
 
-The Supabase service role key is never exposed to the browser. All off-chain reads and writes go through Next.js API routes (`/api/guest-pii`, `/api/hotel-contact`, `/api/notify`).
+The contract is the source of truth. The frontend reads contract state with `genlayer-js` and sends write transactions through the connected wallet. There is no database, service-role key, API route storage layer, or email backend in the active app.
 
 ---
 
@@ -115,8 +115,6 @@ The Supabase service role key is never exposed to the browser. All off-chain rea
 | Frontend | Next.js 14 (App Router), TypeScript |
 | Wallet | wagmi v2, RainbowKit, MetaMask |
 | Chain client | genlayer-js v1.1.8 |
-| Off-chain storage | Supabase (Postgres) |
-| Email | Brevo (transactional) |
 | Styling | Tailwind CSS |
 | Deployment | Vercel |
 
@@ -145,12 +143,11 @@ npm install
 Create `.env.local`:
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key   # server only, never exposed to browser
-BREVO_API_KEY=your_brevo_key
-BREVO_FROM_EMAIL=noreply@yourdomain.com
-BREVO_FROM_NAME=Comfot
+NEXT_PUBLIC_GENLAYER_CONTRACT_ADDRESS=0x...
+NEXT_PUBLIC_GENLAYER_CHAIN_ID=61999
+NEXT_PUBLIC_GENLAYER_RPC_URL=https://studio.genlayer.com/api
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_APP_NAME=Comfot
 ```
 
 ```bash
@@ -171,29 +168,11 @@ The script registers 5 hotels in parallel, submits 13 guest profiles across them
 
 ---
 
-## Supabase Schema
-
-```sql
--- Run in Supabase SQL editor
-create table public.guest_pii ( ... );
-create table public.hotel_contacts ( ... );
-create table public.notifications ( ... );
-
-grant all on public.guest_pii to service_role;
-grant all on public.hotel_contacts to service_role;
-grant all on public.notifications to service_role;
-```
-
-Full schema in [`supabase/schema.sql`](supabase/schema.sql).
-
----
-
 ## Folder Structure
 
 ```
 src/
   app/
-    api/              Next.js API routes (server only — Supabase service role)
     dashboard/        Hotel dashboard pages
       guests/         Guest profile management
       recommendations/ Validator dossiers + escalation resolution
@@ -202,7 +181,6 @@ src/
   hooks/              React hooks (useHotel, useGuests, useRecommendations)
   lib/
     genlayer/         Contract client, tx poller, config
-    supabase/         Server client, types
   types/              TypeScript interfaces (Guest, Recommendation, Hotel...)
 contracts/
   comfot_contract.py  GenLayer intelligent contract

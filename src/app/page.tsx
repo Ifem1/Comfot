@@ -357,7 +357,7 @@ export default function LandingPage() {
                 { text: "  ↓  eq_principle comparison",                  color: "text-ivory-faint" },
                 { text: "  APPROVED  /  ESCALATED  /  REJECTED",        color: "text-success" },
                 { text: "  ↓  stored immutably on StudioNet",           color: "text-ivory-faint" },
-                { text: "Supabase (off-chain PII only — never on-chain)", color: "text-ivory-faint" },
+                { text: "Contract state only — no database backend", color: "text-ivory-faint" },
               ].map((row, i) => (
                 <motion.div key={i} initial={{ opacity: 0, x: -8 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.04 }} className={row.color}>
                   {row.text}
@@ -377,12 +377,12 @@ export default function LandingPage() {
           </FadeUp>
           <StaggerSection className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
             {[
-              { title: "Guest Dossiers", desc: "Submit and edit guest profiles with review history, special requests, dietary needs, conversation logs, and off-chain PII stored securely in Supabase." },
+              { title: "Guest Dossiers", desc: "Submit and edit anonymised guest profiles with review history, special requests, dietary needs, conversation logs, and internal guest references." },
               { title: "Recommendation Lab", desc: "Request validator-consensus recommendations per guest. View dimension scores, justification, amenity suggestions, packages, and upsell opportunities." },
               { title: "Escalation Desk", desc: "When consensus is uncertain, escalated recommendations queue here. Approve or reject with a reviewer note — logged on-chain." },
               { title: "Validation Records", desc: "Full audit trail of every validator consensus round: count, scores, flags, and the comparison result that produced the verdict." },
               { title: "Preference Rules", desc: "Add hotel-wide preference rules that the contract factors into every recommendation — loyalty bonuses, blackout dates, category defaults." },
-              { title: "Notification Alerts", desc: "Email alerts via Brevo when recommendations are escalated, finalized, or rejected. Configurable per hotel with per-event toggles." },
+              { title: "Contract-Only Setup", desc: "Run Comfot with a frontend, wallet, and GenLayer Intelligent Contract as the only persistent source of truth." },
             ].map((f) => (
               <StaggerItem key={f.title}>
                 <GlowCard glowColor="gold" className="h-full">

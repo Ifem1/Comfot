@@ -54,8 +54,10 @@ export interface DimensionScores {
 
 export interface Recommendation {
   rec_id: string
+  sort_order?: number
   hotel_address: string
   guest_id: string
+  guest_ref?: string
   status: RecommendationStatus
   suggested_room: string
   suggested_amenities: string[]
@@ -79,9 +81,11 @@ export interface Recommendation {
 
 export interface Validation {
   validation_id: string
+  sort_order?: number
   rec_id: string
   hotel_address: string
   guest_id: string
+  guest_ref?: string
   consensus_result: string
   alignment_score: number
   decision: string
@@ -95,8 +99,10 @@ export interface Validation {
 
 export interface Escalation {
   escalation_id: string
+  sort_order?: number
   hotel_address: string
   guest_id: string
+  guest_ref?: string
   rec_id: string
   alignment_score?: number
   escalation_reason?: string

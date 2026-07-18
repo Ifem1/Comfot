@@ -1,6 +1,6 @@
 """
 Comfot — Post-Deploy Verification Script
-Usage: python contracts/verify.py <CONTRACT_ADDRESS>
+Usage: python contracts/verify.py <GENLAYER_CONTRACT_ADDRESS>
 """
 
 import sys
@@ -28,7 +28,8 @@ def call(address: str, method: str, args: list = []):
 def verify(address: str):
     print(f"\nVerifying contract at {address}...")
     checks = [
-        ("get_all_audit_log", [], "Contract is responsive"),
+        ("get_contract_version", [], "Contract is responsive"),
+        ("get_global_stats", [], "Global stats are readable"),
     ]
     for method, args, label in checks:
         try:
@@ -41,11 +42,11 @@ def verify(address: str):
             print(f"  FAIL  {label}: {e}")
 
     print("\nVerification complete.")
-    print(f"Add to .env.local: NEXT_PUBLIC_CONTRACT_ADDRESS={address}\n")
+    print(f"Add to .env.local: NEXT_PUBLIC_GENLAYER_CONTRACT_ADDRESS={address}\n")
 
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage: python contracts/verify.py <CONTRACT_ADDRESS>")
+        print("Usage: python contracts/verify.py <GENLAYER_CONTRACT_ADDRESS>")
         sys.exit(1)
     verify(sys.argv[1])

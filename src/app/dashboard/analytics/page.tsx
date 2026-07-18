@@ -54,7 +54,7 @@ export default function AnalyticsPage() {
         <p className="mono-text text-gold mb-1">Performance</p>
         <h1 className="display-text text-4xl font-light text-ivory">Analytics</h1>
         <p className="text-ivory-dim text-sm mt-1">
-          Aggregated validator consensus data from your hotel's recommendation history.
+          Aggregated validator consensus data from your hotel&apos;s recommendation history.
         </p>
       </div>
 

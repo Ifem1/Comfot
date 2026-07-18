@@ -368,6 +368,7 @@ class ComfotContract(gl.Contract):
 
         guest = {
             "guest_id": guest_id,
+            "guest_ref": guest_ref,
             "hotel_address": caller,
             "loyalty_tier": loyalty_tier,
             "stay_count": stay_count,
@@ -481,16 +482,20 @@ class ComfotContract(gl.Contract):
         else:
             status = STATUS_ESCALATED
 
-        rec_id = "rec_" + str(self.next_recommendation_id)
+        rec_order = self.next_recommendation_id
+        rec_id = "rec_" + str(rec_order)
         self.next_recommendation_id += 1
 
-        val_id = "val_" + str(self.next_validation_id)
+        val_order = self.next_validation_id
+        val_id = "val_" + str(val_order)
         self.next_validation_id += 1
 
         rec = {
             "rec_id": rec_id,
+            "sort_order": rec_order,
             "hotel_address": caller,
             "guest_id": guest_id,
+            "guest_ref": guest.get("guest_ref", ""),
             "status": status,
             "suggested_room": recommendation.get("room", ""),
             "suggested_amenities": recommendation.get("amenities", []),
@@ -508,9 +513,11 @@ class ComfotContract(gl.Contract):
 
         val = {
             "validation_id": val_id,
+            "sort_order": val_order,
             "rec_id": rec_id,
             "hotel_address": caller,
             "guest_id": guest_id,
+            "guest_ref": guest.get("guest_ref", ""),
             "consensus_result": consensus_result,
             "alignment_score": validation.get("alignment_score", 50),
             "decision": validation.get("decision", "escalate"),
@@ -538,13 +545,16 @@ class ComfotContract(gl.Contract):
         self.total_validations += 1
 
         if status == STATUS_ESCALATED:
-            esc_id = "esc_" + str(self.next_escalation_id)
+            esc_order = self.next_escalation_id
+            esc_id = "esc_" + str(esc_order)
             self.next_escalation_id += 1
 
             esc = {
                 "escalation_id": esc_id,
+                "sort_order": esc_order,
                 "hotel_address": caller,
                 "guest_id": guest_id,
+                "guest_ref": guest.get("guest_ref", ""),
                 "rec_id": rec_id,
                 "resolved": False,
                 "resolution": "",
@@ -1012,7 +1022,8 @@ approve, reject, escalate.
         ids = self._load_list(self.guest_rec_index.get(guest_id, ""))
         out = []
 
-        for rec_id in ids:
+        for i in range(len(ids) - 1, -1, -1):
+            rec_id = ids[i]
             rec = self._load(self.recommendations.get(rec_id, ""))
             if rec != {}:
                 out.append(rec)
@@ -1026,11 +1037,13 @@ approve, reject, escalate.
 
         for guest_id in guest_ids:
             rec_ids = self._load_list(self.guest_rec_index.get(guest_id, ""))
-            for rec_id in rec_ids:
+            for i in range(len(rec_ids) - 1, -1, -1):
+                rec_id = rec_ids[i]
                 rec = self._load(self.recommendations.get(rec_id, ""))
                 if rec != {}:
                     out.append(rec)
 
+        out = self._sort_records_desc(out, "sort_order")
         return out
 
     @gl.public.view
@@ -1053,7 +1066,8 @@ approve, reject, escalate.
         ids = self._load_list(self.hotel_escalation_index.get(hotel_address, ""))
         out = []
 
-        for esc_id in ids:
+        for i in range(len(ids) - 1, -1, -1):
+            esc_id = ids[i]
             esc = self._load(self.escalations.get(esc_id, ""))
             if esc != {}:
                 out.append(esc)
@@ -1312,6 +1326,26 @@ approve, reject, escalate.
 
     def _dump(self, value) -> str:
         return json.dumps(value, sort_keys=True, default=str)
+
+    def _sort_records_desc(self, values: list[dict], key: str) -> list[dict]:
+        out = []
+
+        for value in values:
+            out.append(value)
+
+        n = len(out)
+
+        for i in range(n):
+            best = i
+            for j in range(i + 1, n):
+                if self._to_int(out[j].get(key, 0)) > self._to_int(out[best].get(key, 0)):
+                    best = j
+            if best != i:
+                current = out[i]
+                out[i] = out[best]
+                out[best] = current
+
+        return out
 
     def _to_int(self, value) -> int:
         try:

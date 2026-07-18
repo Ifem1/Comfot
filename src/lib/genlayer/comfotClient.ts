@@ -71,6 +71,16 @@ function addr(a: string): string {
   return a.toLowerCase()
 }
 
+function sortOrder(value: { sort_order?: number; rec_id?: string; escalation_id?: string }): number {
+  if (typeof value.sort_order === "number") return value.sort_order
+  const id = value.rec_id ?? value.escalation_id ?? ""
+  return Number(id.split("_").pop() ?? 0)
+}
+
+function newestFirst<T extends { sort_order?: number; rec_id?: string; escalation_id?: string }>(items: T[]): T[] {
+  return [...items].sort((a, b) => sortOrder(b) - sortOrder(a))
+}
+
 async function read<T = CalldataEncodable>(
   functionName: string,
   args: CalldataEncodable[] = []
@@ -102,7 +112,6 @@ export async function writeContract(
   if (typeof window === "undefined" || !window.ethereum) {
     throw new Error("No injected wallet found. Please install MetaMask.")
   }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const provider = window.ethereum as any
   const accounts: string[] = await provider.request({ method: "eth_requestAccounts" })
   if (!accounts || accounts.length === 0) {
@@ -192,12 +201,12 @@ export async function getGuestRecommendationIds(guestId: string): Promise<string
 
 export async function getGuestRecommendations(guestId: string): Promise<Recommendation[]> {
   const result = await read<Recommendation[]>("get_guest_recommendations", [guestId])
-  return result ?? []
+  return newestFirst(result ?? [])
 }
 
 export async function getHotelRecommendations(hotelAddress: string): Promise<Recommendation[]> {
   const result = await read<Recommendation[]>("get_hotel_recommendations", [addr(hotelAddress)])
-  return result ?? []
+  return newestFirst(result ?? [])
 }
 
 export async function getHotelRecommendationsByStatus(
@@ -205,17 +214,17 @@ export async function getHotelRecommendationsByStatus(
   status: string
 ): Promise<Recommendation[]> {
   const result = await read<Recommendation[]>("get_hotel_recommendations_by_status", [addr(hotelAddress), status])
-  return result ?? []
+  return newestFirst(result ?? [])
 }
 
 export async function getHotelEscalations(hotelAddress: string): Promise<Escalation[]> {
   const result = await read<Escalation[]>("get_hotel_escalations", [addr(hotelAddress)])
-  return result ?? []
+  return newestFirst(result ?? [])
 }
 
 export async function getPendingEscalations(hotelAddress: string): Promise<Escalation[]> {
   const result = await read<Escalation[]>("get_pending_escalations", [addr(hotelAddress)])
-  return result ?? []
+  return newestFirst(result ?? [])
 }
 
 export async function getPreferenceRules(hotelAddress: string): Promise<PreferenceRule[]> {

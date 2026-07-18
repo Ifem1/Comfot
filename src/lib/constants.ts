@@ -1,4 +1,4 @@
-export const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || ""
+export const GENLAYER_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_GENLAYER_CONTRACT_ADDRESS || ""
 export const GENLAYER_RPC_URL =
   process.env.NEXT_PUBLIC_GENLAYER_RPC_URL || "https://studio.genlayer.com/api"
 export const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || "Comfot"

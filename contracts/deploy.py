@@ -11,7 +11,7 @@ Usage:
 
 After deploy:
   Copy the printed contract address into .env.local:
-  NEXT_PUBLIC_CONTRACT_ADDRESS=0x...
+  NEXT_PUBLIC_GENLAYER_CONTRACT_ADDRESS=0x...
 """
 
 import json
@@ -83,7 +83,7 @@ def deploy_via_rpc():
         print(f"\n  Address: {address}")
         print(f"  Network: StudioNet")
         print(f"\n  Add to .env.local:")
-        print(f"  NEXT_PUBLIC_CONTRACT_ADDRESS={address}")
+        print(f"  NEXT_PUBLIC_GENLAYER_CONTRACT_ADDRESS={address}")
         print("\n" + "="*55)
 
         # Auto-write to .env.local
@@ -92,8 +92,8 @@ def deploy_via_rpc():
             with open(env_path, "r") as f:
                 content = f.read()
             content = content.replace(
-                "NEXT_PUBLIC_CONTRACT_ADDRESS=",
-                f"NEXT_PUBLIC_CONTRACT_ADDRESS={address}"
+                "NEXT_PUBLIC_GENLAYER_CONTRACT_ADDRESS=",
+                f"NEXT_PUBLIC_GENLAYER_CONTRACT_ADDRESS={address}"
             )
             with open(env_path, "w") as f:
                 f.write(content)
@@ -118,7 +118,7 @@ def print_studio_instructions():
 6. Click Deploy
 7. Copy the contract address
 8. Paste into .env.local:
-   NEXT_PUBLIC_CONTRACT_ADDRESS=0x...
+   NEXT_PUBLIC_GENLAYER_CONTRACT_ADDRESS=0x...
 9. Restart dev server: npm run dev
 """)
 

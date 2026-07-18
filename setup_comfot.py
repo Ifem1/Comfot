@@ -285,7 +285,7 @@ __pycache__/
 # 9. .env.example
 # ─────────────────────────────────────────────
 w(".env.example", """# Genlayer
-NEXT_PUBLIC_CONTRACT_ADDRESS=           # paste after StudioNet deploy
+NEXT_PUBLIC_GENLAYER_CONTRACT_ADDRESS=           # paste after StudioNet deploy
 NEXT_PUBLIC_GENLAYER_RPC_URL=https://studio.genlayer.com/api
 
 # App
@@ -296,7 +296,7 @@ NEXT_PUBLIC_APP_NAME=Comfot
 # ─────────────────────────────────────────────
 # 10. .env.local (safe placeholder — gitignored)
 # ─────────────────────────────────────────────
-w(".env.local", """NEXT_PUBLIC_CONTRACT_ADDRESS=
+w(".env.local", """NEXT_PUBLIC_GENLAYER_CONTRACT_ADDRESS=
 NEXT_PUBLIC_GENLAYER_RPC_URL=https://studio.genlayer.com/api
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_APP_NAME=Comfot
@@ -443,7 +443,7 @@ export function statusToVariant(status: string): "default" | "secondary" | "dest
 # ─────────────────────────────────────────────
 # 14. src/lib/constants.ts
 # ─────────────────────────────────────────────
-w("src/lib/constants.ts", """export const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || ""
+w("src/lib/constants.ts", """export const GENLAYER_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_GENLAYER_CONTRACT_ADDRESS || ""
 export const GENLAYER_RPC_URL = process.env.NEXT_PUBLIC_GENLAYER_RPC_URL || "https://studio.genlayer.com/api"
 export const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || "Comfot"
 export const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
@@ -467,7 +467,7 @@ export const NAV_LINKS = [
 # ─────────────────────────────────────────────
 # 15. src/lib/genlayer.ts
 # ─────────────────────────────────────────────
-w("src/lib/genlayer.ts", """import { CONTRACT_ADDRESS, GENLAYER_RPC_URL } from "./constants"
+w("src/lib/genlayer.ts", """import { GENLAYER_CONTRACT_ADDRESS, GENLAYER_RPC_URL } from "./constants"
 
 // Genlayer JS SDK client
 // The SDK exposes a JSON-RPC interface to StudioNet
@@ -537,15 +537,15 @@ function encodeCall(method: string, args: unknown[]): string {
 }
 
 export async function readContract<T = unknown>(method: string, args: unknown[] = []): Promise<T> {
-  if (!CONTRACT_ADDRESS) throw new Error("Contract address not set. Deploy contract first.")
+  if (!GENLAYER_CONTRACT_ADDRESS) throw new Error("Contract address not set. Deploy contract first.")
   const c = getClient()
-  return c.readContract({ address: CONTRACT_ADDRESS, method, args }) as Promise<T>
+  return c.readContract({ address: GENLAYER_CONTRACT_ADDRESS, method, args }) as Promise<T>
 }
 
 export async function writeContract(method: string, args: unknown[] = []): Promise<string> {
-  if (!CONTRACT_ADDRESS) throw new Error("Contract address not set. Deploy contract first.")
+  if (!GENLAYER_CONTRACT_ADDRESS) throw new Error("Contract address not set. Deploy contract first.")
   const c = getClient()
-  return c.writeContract({ address: CONTRACT_ADDRESS, method, args })
+  return c.writeContract({ address: GENLAYER_CONTRACT_ADDRESS, method, args })
 }
 """)
 
@@ -795,7 +795,7 @@ w("docs/deployment.md", """# Deployment Guide
 
 1. Deploy contract: python contracts/deploy.py
 2. Copy contract address
-3. Add to .env.local: NEXT_PUBLIC_CONTRACT_ADDRESS=0x...
+3. Add to .env.local: NEXT_PUBLIC_GENLAYER_CONTRACT_ADDRESS=0x...
 4. Add to Vercel env vars
 5. Push to main → auto-deploy via GitHub Actions
 """)

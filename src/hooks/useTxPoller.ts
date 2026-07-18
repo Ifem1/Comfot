@@ -22,7 +22,7 @@ const STATUS_LABELS: Record<TxStatus, string> = {
 
 export interface TxTrackOptions {
   invalidateKeys?: string[][]
-  /** Called after tx finalizes — use to fire /api/notify or other side-effects */
+  /** Called after tx finalizes for client-side cache refreshes or other side-effects */
   onFinalized?: (status: TxStatus) => void
 }
 

@@ -1,11 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useHotel, useRegisterHotel } from "@/hooks/useHotel"
-import { useHotelContact } from "@/hooks/useHotelContact"
-import { useAccount } from "wagmi"
-import { Plus, X, CheckCircle, Bell, Save } from "lucide-react"
-import { DEMO_HOTEL, studioTxLink } from "@/lib/genlayer/config"
+import { Plus, X, CheckCircle } from "lucide-react"
+import { DEMO_HOTEL } from "@/lib/genlayer/config"
 
 function TagInput({ label, value, onChange }: { label: string; value: string[]; onChange: (v: string[]) => void }) {
   const [input, setInput] = useState("")
@@ -44,10 +42,8 @@ function TagInput({ label, value, onChange }: { label: string; value: string[]; 
 }
 
 export default function SettingsPage() {
-  const { address } = useAccount()
   const { data: hotel, isLoading } = useHotel()
   const registerHotel = useRegisterHotel()
-  const { fetchContact, saveContact, loading: contactLoading } = useHotelContact()
 
   const [name, setName] = useState("")
   const [propertyType, setPropertyType] = useState("luxury")
@@ -59,26 +55,6 @@ export default function SettingsPage() {
   const [starRating, setStarRating] = useState(4)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
-
-  // Notification contact state
-  const [contactEmail, setContactEmail] = useState("")
-  const [notifyEscalations, setNotifyEscalations] = useState(true)
-  const [notifyFinalized, setNotifyFinalized] = useState(false)
-  const [contactSaved, setContactSaved] = useState(false)
-  const [contactSaving, setContactSaving] = useState(false)
-
-  useEffect(() => {
-    if (!address) return
-    fetchContact(address).then((c) => {
-      if (c) {
-        setContactEmail(c.contact_email ?? "")
-        setNotifyEscalations(c.notify_escalations)
-        setNotifyFinalized(c.notify_finalized)
-      }
-    }).catch(() => {
-      // notification prefs unavailable — form still works
-    })
-  }, [address, fetchContact])
 
   const loadDemo = () => {
     setName(DEMO_HOTEL.name)
@@ -213,83 +189,6 @@ export default function SettingsPage() {
           {submitting ? "Submitting transaction…" : hotel ? "Update Registration" : "Register Hotel"}
         </button>
       </form>
-
-      {/* Notification contact section */}
-      <div className="glass-card rounded-xl p-8 space-y-5">
-        <div className="flex items-center gap-2 mb-2">
-          <Bell className="w-4 h-4 text-gold" />
-          <p className="text-ivory text-sm font-medium">Notification Preferences</p>
-        </div>
-        <p className="text-ivory-dim text-xs leading-relaxed">
-          Comfot logs a notification whenever a recommendation is escalated, finalized, or rejected.
-          Add a contact email below to receive alerts when email delivery is activated.
-        </p>
-
-        <div>
-          <label className="label-dark">Contact Email</label>
-          <input
-            className="input-dark"
-            type="email"
-            value={contactEmail}
-            onChange={(e) => setContactEmail(e.target.value)}
-            placeholder="ops@yourhotel.com"
-          />
-        </div>
-
-        <div className="space-y-3">
-          <label className="flex items-center gap-3 cursor-pointer group">
-            <input
-              type="checkbox"
-              checked={notifyEscalations}
-              onChange={(e) => setNotifyEscalations(e.target.checked)}
-              className="w-4 h-4 accent-gold"
-            />
-            <div>
-              <p className="text-ivory text-sm group-hover:text-gold transition-colors">Escalations &amp; rejections</p>
-              <p className="text-ivory-faint text-xs">Alert when a recommendation needs human review or is rejected by consensus</p>
-            </div>
-          </label>
-          <label className="flex items-center gap-3 cursor-pointer group">
-            <input
-              type="checkbox"
-              checked={notifyFinalized}
-              onChange={(e) => setNotifyFinalized(e.target.checked)}
-              className="w-4 h-4 accent-gold"
-            />
-            <div>
-              <p className="text-ivory text-sm group-hover:text-gold transition-colors">Finalized recommendations</p>
-              <p className="text-ivory-faint text-xs">Alert when a recommendation is accepted and finalized by validator consensus</p>
-            </div>
-          </label>
-        </div>
-
-        <button
-          type="button"
-          disabled={contactSaving || !address}
-          onClick={async () => {
-            if (!address) return
-            setContactSaving(true)
-            setContactSaved(false)
-            await saveContact({
-              hotel_address: address,
-              hotel_name: hotel?.name,
-              contact_email: contactEmail || undefined,
-              notify_escalations: notifyEscalations,
-              notify_finalized: notifyFinalized,
-            })
-            setContactSaving(false)
-            setContactSaved(true)
-            setTimeout(() => setContactSaved(false), 3000)
-          }}
-          className="btn-ghost flex items-center gap-2 text-sm disabled:opacity-50"
-        >
-          {contactSaved ? (
-            <><CheckCircle className="w-4 h-4 text-success" /> Saved</>
-          ) : (
-            <><Save className="w-4 h-4" /> {contactSaving ? "Saving…" : "Save Preferences"}</>
-          )}
-        </button>
-      </div>
     </div>
   )
 }
